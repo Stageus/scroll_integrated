@@ -8,6 +8,9 @@ app.use(cookieParser());
 
 app.use(express.json());
 
+const pages = require("./router/pages");
+app.use("/", pages);
+
 app.listen(port, (req, res) => {
     console.log(port, "번에 서버 실행");
 });
