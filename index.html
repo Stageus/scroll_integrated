@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="kr">
 <head>
@@ -8,5 +9,34 @@
 </head>
 <body>
     <h1>This is scroll test page</h1>
+    <input type="button" value="postgresTest" onclick="postgresTest()"></input>
+    <input type="button" value="elasticTest" onclick="elasticTest()"></input>
 </body>
+<script>
+    const postgresTest = () => {
+        fetch("/test/postgres")
+        .then(response => response.json())
+        .then(result => {
+            if (result.success) {
+                console.log("postgres connect");
+            }
+            else {
+                console.log("postgres not connect");
+            }
+        })
+    }
+
+    const elasticTest = () => {
+        fetch("/test/elastic")
+        .then(response => response.json())
+        .then(result => {
+            if (result.success) {
+                console.log("elastic connect");
+            }
+            else {
+                console.log("elastic not connect");
+            }
+        })
+    }
+</script>
 </html>
