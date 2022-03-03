@@ -13,7 +13,7 @@ const pages = require("./router/pages");
 app.use("/", pages);
 
 const test = require("./router/connectTest");
-app.use("test", test);
+app.use("/test", test);
 
 app.listen(port, (req, res) => {
     console.log(port, "번에 서버 실행");

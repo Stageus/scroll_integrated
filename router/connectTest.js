@@ -7,7 +7,7 @@ const pgConfig = require("../private/pgConfig");
 const es = require("elasticsearch");
 const INDEX = "test";
 
-router.get("/posrgres", (req, res) => {
+router.get("/postgres", (req, res) => {
     const result = {
         success: false
     }
