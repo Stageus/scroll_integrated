@@ -40,13 +40,17 @@ router.get("/elastic", (req, res) => {
     }
 
     const client = new es.Client({
-        node: "https://localhost:9200/"
+        node: "https://elasticesearch:9200/"
     });
 
     client.search({
         index: INDEX,
         body: {
-        }
+            query: {
+                match_all: {}
+            },
+            size: 999
+        },
     }, (err, elasticResult) => {
         if (err) {
             console.log("Elastic GET Error:", err);
