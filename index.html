@@ -32,7 +32,14 @@
     }
 
     const elasticTest = () => {
-        fetch("/test/elastic")
+        fetch("/test/elastic", {
+            method: "PUT",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify({
+            })
+        })
         .then(response => response.json())
         .then(result => {
             if (result.success) {

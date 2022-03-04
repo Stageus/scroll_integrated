@@ -34,7 +34,7 @@ router.get("/postgres", (req, res) => {
     });
 });
 
-router.get("/elastic", (req, res) => {
+router.post("/elastic", (req, res) => {
     const result = {
         success: false
     }
@@ -43,15 +43,12 @@ router.get("/elastic", (req, res) => {
         node: "https://elasticesearch:9200/"
     });
 
-    client.search({
+    client.index({
         index: INDEX,
         body: {
-            query: {
-                match_all: {}
-            },
-            size: 999
+            "docker": success
         },
-    }, (err, elasticResult) => {
+    }, (err) => {
         if (err) {
             console.log("Elastic GET Error:", err);
         }
