@@ -41,7 +41,7 @@ router.post("/elastic", (req, res) => {
     }
 
     const client = new es.Client({
-        node: "https://elasticesearch:9200/"
+        node: "http://elasticesearch:9200/"
     });
 
     client.index({
@@ -51,7 +51,7 @@ router.post("/elastic", (req, res) => {
         },
     }, (err) => {
         if (err) {
-            console.log("Elastic GET Error:", err);
+            console.log("Elastic POST Error:", err);
         }
         else {
             result.success = true;
