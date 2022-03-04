@@ -35,6 +35,7 @@ router.get("/postgres", (req, res) => {
 });
 
 router.post("/elastic", (req, res) => {
+    const receive = req.body.something
     const result = {
         success: false
     }
@@ -46,7 +47,7 @@ router.post("/elastic", (req, res) => {
     client.index({
         index: INDEX,
         body: {
-            "docker": success
+            "docker": receive
         },
     }, (err) => {
         if (err) {
