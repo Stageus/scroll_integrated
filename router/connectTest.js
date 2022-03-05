@@ -41,14 +41,14 @@ router.post("/elastic", (req, res) => {
     }
 
     const client = new es.Client({
-        node: "http://elasticesearch/"
+        node: "http://elasticsearch:9200/"
     });
 
     client.index({
         index: INDEX,
         body: {
             "docker": receive
-        },
+        }
     }, (err) => {
         if (err) {
             console.log("Elastic POST Error:", err);
