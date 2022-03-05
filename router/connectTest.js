@@ -37,11 +37,19 @@ router.get("/postgres", (req, res) => {
 router.post("/elastic", (req, res) => {
     const receive = req.body.something
     const result = {
-        success: false
+        success: false,
+        error: null
     }
 
     const client = new es.Client({
+<<<<<<< HEAD
         node: "http://elasticsearch:9200/"
+=======
+        node: "http://elasticsearch:9200",
+        maxRetries: 5,
+        requestTimeout: 60000,
+        sniffOnStart: true
+>>>>>>> ef26538cb6f0d6ebf11fb9c8a77975eb0d27ef1c
     });
 
     client.index({
@@ -52,6 +60,7 @@ router.post("/elastic", (req, res) => {
     }, (err) => {
         if (err) {
             console.log("Elastic POST Error:", err);
+            result.error = err;
         }
         else {
             result.success = true;
