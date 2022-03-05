@@ -39,9 +39,10 @@ router.post("/elastic", (req, res) => {
     const result = {
         success: false
     }
+    const esHost = process.env.ES_HOST || "localhost";
 
     const client = new es.Client({
-        node: "http://elasticesearch/"
+        node: "http://" + esHost + ":9200"
     });
 
     client.index({
