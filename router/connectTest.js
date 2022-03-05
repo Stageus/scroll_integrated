@@ -37,7 +37,8 @@ router.get("/postgres", (req, res) => {
 router.post("/elastic", (req, res) => {
     const receive = req.body.something
     const result = {
-        success: false
+        success: false,
+        error: null
     }
     const esHost = process.env.ES_HOST || "localhost";
 
@@ -53,6 +54,7 @@ router.post("/elastic", (req, res) => {
     }, (err) => {
         if (err) {
             console.log("Elastic POST Error:", err);
+            result.error = err;
         }
         else {
             result.success = true;
