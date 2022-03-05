@@ -4,8 +4,9 @@ const router = express.Router();
 // const path = require("path");
 const pgClient = require("pg").Client;
 const pgConfig = require("../private/pgConfig");
-const es = require("elasticsearch");
+// const es = require("elasticsearch");
 const INDEX = "test";
+const es = require("@elastic/elasticsearch");
 
 router.get("/postgres", (req, res) => {
     const result = {
@@ -42,7 +43,7 @@ router.post("/elastic", (req, res) => {
     }
 
     const client = new es.Client({
-        host: "http://elasticsearch"
+        node: "http://elasticsearch:9200"
     });
 
     client.index({
