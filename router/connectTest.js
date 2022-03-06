@@ -6,7 +6,7 @@ const pgClient = require("pg").Client;
 const pgConfig = require("../private/pgConfig");
 // const es = require("elasticsearch");
 const INDEX = "test";
-const es = require("@elastic/elasticsearch");
+const es = require("es7");
 
 router.get("/postgres", (req, res) => {
     const result = {
