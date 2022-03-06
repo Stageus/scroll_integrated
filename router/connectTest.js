@@ -48,7 +48,7 @@ router.post("/elastic", (req, res) => {
 
     client.index({
         index: INDEX,
-        body: {
+        document: {
             "docker": receive
         }
     }, (err) => {
