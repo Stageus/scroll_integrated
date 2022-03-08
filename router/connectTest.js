@@ -45,7 +45,7 @@ router.post("/elastic", (req, res) => {
     const client = new es.Client({
         node: "http://elasticsearch:9200"
     });
-    
+
     client.index({
         index: INDEX,
         body: {
