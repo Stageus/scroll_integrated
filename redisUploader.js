@@ -9,7 +9,9 @@ const VOTERLIST = "voteId";
 
 // DB에 모든 데이터 업로드
 const upload = async () => {
-
+    sendViewCountToDB();
+    sendVotersToDB();
+    sendStarToDB();
 }
 
 // DB에 모든 웹툰의 조회수 저장

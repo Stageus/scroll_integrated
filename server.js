@@ -15,6 +15,9 @@ app.use("/", pages);
 const test = require("./router/connectTest");
 app.use("/test", test);
 
+const account = require("./router/account");
+app.use("/account", account);
+
 app.listen(port, (req, res) => {
     console.log(port, "번에 서버 실행");
 });

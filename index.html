@@ -11,8 +11,28 @@
     <h1>This is scroll test page</h1>
     <input type="button" value="postgresTest" onclick="postgresTest()"></input>
     <input type="button" value="elasticTest" onclick="elasticTest()"></input>
+    <input type="button" value="postgresAsyncTest" onclick="postgresAsyncTest()"></input>
 </body>
 <script>
+    const postgresAsyncTest = () => {
+        fetch("/test/postAsync")
+        .then(response => response.json())
+        .then(result => {
+            if (result.success) {
+                console.log(result);
+                console.log("postgres success");
+            }
+            else {
+                console.log(result);
+                console.log("postgres failed");
+            }
+        })
+        .catch(err => {
+            console.log("postgresAsyncTest error");
+            console.log("postgres not success");
+        })
+    }
+
     const postgresTest = () => {
         fetch("/test/postgres")
         .then(response => response.json())

@@ -2,45 +2,48 @@
 const pgClient = require("pg").Client;
 const pgConfig = require("./private/pgConfig");
 
-const pgRequest = (sql, values, work) => {
-    console.log("pgRequest Start");
-    const result = {
-        "success": false,
-        "data": null,
-        "errType": null
-    };
-    console.log("Set Result");
+const pgRequest = (sql, values) => 
+    new Promise((resolve, reject) => {
+        console.log("pgRequest Start");
+    
+        const result = {
+            "success": false,
+            "data": null,
+            "errType": null
+        };
+        console.log("Set Result");
+    
+        const pg = new pgClient(pgConfig);
+        console.log("Set Variables");
+    
+        console.log("before pg.connect");
+        pg.connect()
+        .then(() => {
+            let values2 = null;
+            if(values != null) {
+                values2 = values;
+            }
+            else {
+                values2 = [];
+            }
 
-    const pg = new pgClient(pgConfig);
-    console.log("Set Variables");
-
-    console.log("before pg.connect");
-    pg.connect(err => {
-        if (err) {
+            pg.query(sql, values2)
+            .then(res => {
+                result.success = true;
+                result.data = res.rows;
+                resolve(result);
+            }).catch(err => {
+                console.log("SQL ERROR:", err);
+                result.errType = "SQL ERROR";
+                reject(result, err);
+            });
+        }).catch(err => {
             console.log("CONNECT ERROR:", err);
             result.errType = "CONNECT ERROR";
-            work(result);
-
+            reject(result, err);
+        }).finally(() => {
             pg.end();
-        }
-        else {
-            pg.query(sql, values, (err, res2) => {
-                if (err) {
-                    console.log("SQL ERROR:", err);
-                    result.errType = "SQL ERROR";
-                }
-                else {
-                    result.success = true;
-                    result.data = res2.rows;
-                    console.log("res2.rows:", res2.rows);
-                }
-
-                work(result);
-
-                pg.end();
-            });
-        }
-    });
-};
+        });
+    })
 
 module.exports = pgRequest;
