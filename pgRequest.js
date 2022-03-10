@@ -35,15 +35,15 @@ const pgRequest = (sql, values) =>
             }).catch(err => {
                 console.log("SQL ERROR:", err);
                 result.errType = "SQL ERROR";
-                reject(result, err);
+                reject(err);
             });
         }).catch(err => {
             console.log("CONNECT ERROR:", err);
             result.errType = "CONNECT ERROR";
-            reject(result, err);
+            reject(err);
         }).finally(() => {
             pg.end();
         });
-    })
+    });
 
 module.exports = pgRequest;
