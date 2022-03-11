@@ -15,7 +15,7 @@ const pgRequest = (sql, values) =>
     
         const pg = new pgClient(pgConfig);
         console.log("Set Variables");
-    
+
         console.log("before pg.connect");
         pg.connect()
         .then(() => {
@@ -36,13 +36,15 @@ const pgRequest = (sql, values) =>
                 console.log("SQL ERROR:", err);
                 result.errType = "SQL ERROR";
                 reject(err);
+            }).finally(() => {
+                pg.end();
             });
         }).catch(err => {
             console.log("CONNECT ERROR:", err);
             result.errType = "CONNECT ERROR";
             reject(err);
         }).finally(() => {
-            pg.end();
+            console.log("finally in pg.connect");
         });
     });
 

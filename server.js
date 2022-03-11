@@ -12,7 +12,7 @@ app.use(express.json());
 const pages = require("./router/pages");
 app.use("/", pages);
 
-const test = require("./router/connectTest");
+const test = require("./router/test");
 app.use("/test", test);
 
 const account = require("./router/account");

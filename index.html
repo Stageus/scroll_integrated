@@ -12,8 +12,192 @@
     <input type="button" value="postgresTest" onclick="postgresTest()"></input>
     <input type="button" value="elasticTest" onclick="elasticTest()"></input>
     <input type="button" value="postgresAsyncTest" onclick="postgresAsyncTest()"></input>
+    <input type="button" value="redisGetViewCountTest" onclick="getViewCountTest()"></input>
+    <input type="button" value="redisSetTest" onclick="redisSetTest()"></input>
+    <input type="button" value="redisGetTest" onclick="redisGetTest()"></input>
+    <div>
+        <input type="button" value="getViewCountTest" onclick="getViewCountTest()"></input>
+        <input type="button" value="getAvgStar" onclick="getAvgStar()"></input>
+        <input type="button" value="addViewCount" onclick="addViewCount()"></input>
+        <input type="button" value="addStar" onclick="addStar()"></input>
+        <input type="button" value="initViewCount" onclick="initViewCount()"></input>
+        <input type="button" value="initStar" onclick="initStar()"></input>
+    </div>
 </body>
 <script>
+    const initStar = () => {
+        fetch("/test/redis/initStar", {
+            method: "DELETE",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify({
+                webtoonId: "123"
+            })
+        })
+        .then(response => response.json())
+        .then(result => {
+            if (result.success) {
+                console.log(result);
+                console.log("redis success");
+            }
+            else {
+                console.log(result);
+                console.log("redis failed");
+            }
+        })
+        .catch(err => {
+            console.log("redis error");
+            console.log("redis not success");
+        })
+    }
+
+    const initViewCount = () => {
+        fetch("/test/redis/initViewCount", {
+            method: "DELETE",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify({
+                webtoonId: "123"
+            })
+        })
+        .then(response => response.json())
+        .then(result => {
+            if (result.success) {
+                console.log(result);
+                console.log("redis success");
+            }
+            else {
+                console.log(result);
+                console.log("redis failed");
+            }
+        })
+        .catch(err => {
+            console.log("redis error");
+            console.log("redis not success");
+        })
+    }
+
+    const getViewCountTest = () =>  {
+        fetch("/test/redis/getViewCount?webtoonId=123")
+        .then(response => response.json())
+        .then(result => {
+            if (result.success) {
+                console.log(result);
+                console.log("redis success");
+            }
+            else {
+                console.log(result);
+                console.log("redis failed");
+            }
+        })
+        .catch(err => {
+            console.log("redis error");
+            console.log("redis not success");
+        })
+    }
+
+    const getAvgStar = () => {
+        fetch("/test/redis/getAvgStar?webtoonId=123")
+        .then(response => response.json())
+        .then(result => {
+            if (result.success) {
+                console.log(result);
+                console.log("redis success");
+            }
+            else {
+                console.log(result);
+                console.log("redis failed");
+            }
+        })
+        .catch(err => {
+            console.log("redis error :", err);
+            console.log("redis not success");
+        })
+    }
+
+    const addViewCount = () => {
+        fetch("/test/redis/addViewCount", {
+            "method": "PUT",
+            "headers": {
+                "Content-Type": "application/json"
+            },
+            "body": JSON.stringify({
+                webtoonId: "123"
+            })
+        })
+        .then(response => response.json())
+        .then(result => {
+            if (result.success) {
+                console.log(result);
+                console.log("redis success");
+            }
+            else {
+                console.log(result);
+                console.log("redis failed");
+            }
+        })
+        .catch(err => {
+            console.log("redis error :", err);
+            console.log("redis not success");
+        })
+    }
+
+    const addStar = () => {
+        fetch("/test/redis/addStar", {
+            "method": "PUT",
+            "headers": {
+                "Content-Type": "application/json"
+            },
+            "body": JSON.stringify({
+                webtoonId: "123",
+                star: 5,
+                voter: "ganada"
+            })
+        })
+        .then(response => response.json())
+        .then(result => {
+            if (result.success) {
+                console.log(result);
+                console.log("redis success");
+            }
+            else {
+                console.log(result);
+                console.log("redis failed");
+            }
+        })
+        .catch(err => {
+            console.log("redis error :", err);
+            console.log("redis not success");
+        })
+    }
+
+    const redisGetTest = () => {
+        fetch("/test/redis/setGetTest?key=ABC")
+        .then(response => response.json())
+        .then(result => {
+            console.log(result.success);
+            console.log(result.data);
+        })
+    }
+
+    const redisSetTest = () => {
+        fetch("/test/redis/setSetTest", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify({
+                key: "ABC",
+                data: "ramaba"
+            })
+        }).then(response => response.json())
+        .then(result => {
+            console.log(result.success);
+            console.log(result.data);
+        })
+    }
     const postgresAsyncTest = () => {
         fetch("/test/postAsync")
         .then(response => response.json())
