@@ -12,7 +12,7 @@ const pgRequest = (sql, values) =>
             "errType": null
         };
         console.log("Set Result");
-    
+
         const pg = new pgClient(pgConfig);
         console.log("Set Variables");
 

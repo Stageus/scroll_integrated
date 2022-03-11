@@ -11,6 +11,35 @@ const es = require("es7");
 const redisClient = require("redis").createClient();
 const redis = require("../redis");
 
+router.get("/redis/getAllViewCount", async (req, res) => {
+    const result = {
+        success: false,
+        data: []
+    };
+
+    try {
+        await redisClient.connect();
+        const valueList = await redisClient.zRange("viewcount", 0, -1, "witchscores");
+        console.log("getAllViewCount result", valueList);
+
+        for (let index = 0; index < valueList.length; index++) {
+            const tempValue = valueList[index];
+            result.data.push({
+                value: tempValue,
+                score: await redisClient.zScore("viewcount", tempValue)
+            })
+        }
+
+        await redisClient.disconnect();
+        result.success = true;
+    } catch(err) {
+        console.log(err);
+        await redisClient.disconnect();
+    }
+
+    res.send(result.data);
+})
+
 router.get("/redis/getViewCount", async (req, res) => {
     const receive = {
         webtoonId: req.query.webtoonId

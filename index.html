@@ -23,8 +23,19 @@
         <input type="button" value="initViewCount" onclick="initViewCount()"></input>
         <input type="button" value="initStar" onclick="initStar()"></input>
     </div>
+    <input type="button" value="getAllViewCount" onclick="getAllViewCount()"></input>
 </body>
 <script>
+    const getAllViewCount = () => {
+        fetch("/test/redis/getAllViewCount")
+        .then(response => response.json())
+        .then(result => {
+            console.log(result);
+        }).catch(err => {
+            console.log(err);
+        });
+    }
+
     const initStar = () => {
         fetch("/test/redis/initStar", {
             method: "DELETE",
