@@ -18,6 +18,9 @@ app.use("/test", test);
 const account = require("./router/account");
 app.use("/account", account);
 
+const webtoon = require("./router/webtoon");
+app.use("/webtoon", webtoon);
+
 app.listen(port, (req, res) => {
     console.log(port, "번에 서버 실행");
 });

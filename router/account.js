@@ -224,8 +224,8 @@ router.put("", (req, res) => {
                 result.message = "회원 정보 수정에 실패했습니다.";
             }).finally(() => {
                 // mongoDB에 로그 저장
-    
-            
+
+
                 // 결과 보내기
                 res.send(result);
     
