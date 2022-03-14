@@ -129,9 +129,6 @@ router.post("/login", (req, res) => {
             if (post.data.length > 0) {
                 const jwtToken = jwt.sign(
                     {
-                        // pgResult.data 어떤 식으로 들어오는지 확인해야 함.
-                        // 이것들 이외에 필요한 정보 추가하기
-                        "id": post.data.id,
                         "email": post.data.email,
                         "nickname": post.data.nickname
                     },

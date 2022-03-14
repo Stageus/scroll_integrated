@@ -11,7 +11,7 @@ const es = require("es7");
 const jwt = require("jsonwebtoken");
 const jwtKey = require("../private/privateKey").jwtPrivateKey;
 
-const INDEX = "myLibrary";
+const INDEX = "library";
 
 // 즐겨찾기 정보 불러오기
 router.get("", (req, res) => {
@@ -30,10 +30,12 @@ router.get("", (req, res) => {
         totalVote: null
     }
 
-    const auth = false;
+    let auth = false;
+    let email = null;
     try {
         const jwtData = jwt.verify(res.cookies.token, jwtKey);
         auth = true;
+        email = jwtData.email;
     } catch(err) {
         console.log("토큰 만료");
     }
@@ -44,7 +46,7 @@ router.get("", (req, res) => {
         });
     
         esClient.search({
-            index: INDEX,
+            index: email + INDEX,
             body:{
     
             }
@@ -55,7 +57,7 @@ router.get("", (req, res) => {
             else {
     
             }
-    
+
             res.send(result);
         });
     }
@@ -63,13 +65,12 @@ router.get("", (req, res) => {
         console.log("인증 실패");
         res.send(result);
     }
-
 });
 
 // 즐겨찾기 등록
 router.post("/preview", (req, res) => {
     receive = {
-        searchWord: req.query.searchWord
+        searchWord: req.query.webtoonID
     }
     result = {
         success: false,
@@ -79,10 +80,12 @@ router.post("/preview", (req, res) => {
         link: null
     }
 
-    const auth = false;
+    let auth = false;
+    let email = null;
     try {
         const jwtData = jwt.verify(res.cookies.token, jwtKey);
         auth = true;
+        email = jwtData.email;
     } catch(err) {
         console.log("토큰 만료");
     }
@@ -91,11 +94,11 @@ router.post("/preview", (req, res) => {
         const esClient = new es.Client({
             node: "https://localhost:9200/" // 수정해야함.
         });
-    
+
         esClient.index({
-            index: INDEX,
+            index: email + INDEX,
             body:{
-    
+
             }
         }, err => {
             if (err) {
@@ -135,11 +138,11 @@ router.delete("/preview", (req, res) => {
         const esClient = new es.Client({
             node: "https://localhost:9200/" // 수정해야함.
         });
-    
+
         esClient.deleteByQuery({
             index: INDEX,
             body:{
-    
+
             }
         }, err => {
             if (err) {
