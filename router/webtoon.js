@@ -87,3 +87,5 @@ router.get("/preview", (req, res) => {
         res.send(result);
     });
 })
+
+module.exports = router;
