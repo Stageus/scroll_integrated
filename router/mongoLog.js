@@ -12,7 +12,7 @@ const userDocument = mongoose.model("user", userSchema);
 
 const mongoLog = (apiValue, ipValue, inputData, outputData) => {
     try {
-        mongoose.connect("mongodb://172.30.0.4", { useNewUrlParser: true })
+        mongoose.connect("mongodb://mongo:27017", { useNewUrlParser: true })
         .then(() => {
             const user = new userDocument({
                 api: apiValue,
