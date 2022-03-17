@@ -342,7 +342,7 @@ router.get("/mongodb", async(req, res) => {
     }
 
     try {
-        mongoLog();
+        mongoLog(null, null, null, null);
         result.success = true;
     } catch(err) {
         console.log(err);
