@@ -11,6 +11,8 @@ const es = require("es7");
 const redisClient = require("redis").createClient();
 const redis = require("../redis");
 
+const mongoLog = require("./mongoLog");
+
 router.get("/redis/getAllViewCount", async (req, res) => {
     const result = {
         success: false,
@@ -329,6 +331,21 @@ router.post("/redis/setSetTest", async (req,res) => {
     catch(err) {
         console.log("setSetTest error :", err);
         await redisClientedis.disconnect();
+    }
+
+    res.send(result);
+})
+
+router.get("/mongodb", async(req, res) => {
+    const result = {
+        success: false
+    }
+
+    try {
+        mongoLog();
+        result.success = true;
+    } catch(err) {
+        console.log(err);
     }
 
     res.send(result);

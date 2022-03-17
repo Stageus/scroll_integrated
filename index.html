@@ -24,6 +24,8 @@
         <input type="button" value="initStar" onclick="initStar()"></input>
     </div>
     <input type="button" value="getAllViewCount" onclick="getAllViewCount()"></input>
+    <br>
+    <input type="button" value="mongoTest" onclick="mongoConTest()">
 </body>
 <script>
     const getAllViewCount = () => {
@@ -264,6 +266,18 @@
             else {
                 console.log("elastic not connect");
                 console.log(result);
+            }
+        })
+    }
+
+    const mongoConTest = () => {
+        fetch("/test/mongodb")
+        .then(response => response.json())
+        .then(result => {
+            if (result.success) {
+                console.log("mongodb connect");
+            } else {
+                console.log("mongodb not connect");
             }
         })
     }
