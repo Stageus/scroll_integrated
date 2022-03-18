@@ -47,21 +47,21 @@ router.post("", (req, res) => {
         // 등등 회원가입 정보
     };
     const result = {
-        message: null,
+        problem: 0,
         success: false
     };
 
     // 회원 정보 조건 확인(예외처리)
     if (receive.email.match(emailForm) && receive.pw.match(pwForm) && receive.nickname.match(nickForm)) {
         // postgresql의 회원 정보 중복 확인. 중복 불가 컬럼 email, nickname
-        const sql = "SELECT * FROM member WHERE email=$1 OR nickname=$2;"; // 테이블 확정 후 수정
+        const sql = "SELECT * FROM member WHERE email=$1 OR nickname=$2;";
         const values = [receive.email, receive.nickname]; // 다른 중복 불가 회원 정보도 포함하기.
         pg(sql, values)
         .then(post => {
             if (post.succss) {
                 if (post.data.length > 0) {
                     console.log("\nalready exist info\n");
-                    result.message = "회원 정보가 중복되었습니다.";
+                    result.problem = 3; // 중복 회원 존재
                 }
                 else {
                     // postgresql에 회원정보 저장 요청
@@ -76,22 +76,24 @@ router.post("", (req, res) => {
                         else {
                             console.log("\npostgresql error insert info failed\n");
                             result.message = "오류가 발생했습니다";
+                            result.problem = 4; // 데이터 입력 실패
                         }
                     }).catch(err => {
                         console.log("\npostgresql error insert info failed\n");
                         console.log(err);
-                        result.message = "오류가 발생했습니다.";
+                        result.problem = 4; // 데이터 입력 실패
                     });
                 }
             }
             else {
                 console.log("\npostgresql error check info failed\n");
                 result.message = "에러가 발생했습니다"
+                result.problem = 3; // 중복 회원 존재
             }
         }).catch(err => {
             console.log("\npostgresql error check info failed\n");
             console.log(err);
-            result.message = "에러가 발생했습니다"
+            result.problem = 2; // 중복 확인 실패
         }).finally(() => {
             // mongoDB에 로그 저장
         
@@ -101,11 +103,9 @@ router.post("", (req, res) => {
         })
     }
     else {
-        result.message = "회원 정보를 올바르게 입력해주세요";
+        result.problem = 1; // 데이터 양식에 맞지 않음
         res.send(result);
     }
-
-
 });
 
 // 로그인
@@ -116,7 +116,7 @@ router.post("/login", (req, res) => {
     };
     const result = {
         success: false,
-        message: null
+        problem: 0
     }; 
 
     // postgresql에 같은 회원 정보 요청
@@ -129,7 +129,9 @@ router.post("/login", (req, res) => {
             if (post.data.length > 0) {
                 const jwtToken = jwt.sign(
                     {
+                        "memberID": post.data.memberID,
                         "email": post.data.email,
+                        "pw": post.data.password,
                         "nickname": post.data.nickname
                     },
                     jwtKey
@@ -139,17 +141,17 @@ router.post("/login", (req, res) => {
             }
             else {
                 console.log("member info not exist");
-                result.message = "회원정보가 존재하지 않습니다.";
+                result.problem = 2; // 회원이 존재하지 않음
             }
         }
         else {
-            result.message = "오류가 발생했습니다.";
+            result.problem = 1; // DB 에러
             console.log("\npostgresql err get member info failed\n");
         }
     }).catch(err => {
         console.log("\npostgresql err get member info failed");
         console.log(err);
-        result.message = "오류가 발생했습니다.";
+        result.problem = 1; // DB 에러
     }).finally(() => {
         // mongoDB에 로그 저장
 
@@ -162,30 +164,37 @@ router.post("/login", (req, res) => {
 // 회원정보 수정
 router.put("", (req, res) => {
     const receive = {
-        email: req.body.email,
-        pw: req.body.pw
+        nickname: req.body.nickname,
+        newPw: req.body.newPw,
+        currentPw: req.body.currentPw
     };
     const result = {
         success: false,
-        message: null
+        problem: 0
     };
 
     // jwt 인증
     const validToken = false;
+    const jwtData = null;
     try {
-        const jwtData = jwt.verify(req.cookies.token);
-        if(jwtData.email == receive.email) {
+        jwtData = jwt.verify(req.cookies.token);
+        const pw = jwtData.pw;
+        if (pw != currentPw) {
+            result.problem = 2; // 현재 비밀번호 틀림
+        }
+        else {
             validToken = true;
         }
     }
     catch(err) {
         validToken = false;
+        result.problem = 1; // 인증 실패
     }
 
     // 토큰 유효한지 확인
     if (validToken) {
         // 회원 정보 조건 확인(예외처리)
-        if (receive.pw.match(pwForm)) {
+        if (receive.newPw.match(pwForm) && receive.nickname.match(nickForm)) {
             // postgresql에 회원 정보 수정 요청
             const sql = "UPDATE member SET password=$1 WHERE email=$2;";
             const values = [receive.pw, receive.email];
@@ -197,28 +206,29 @@ router.put("", (req, res) => {
                         // 변경된 정보로 토큰 변경
                         const jwtToken = jwt.sign(
                             {
-                            email: post.data.email,
-                            pw: post.data.pw,
-                            nickname: post.data.nickname
+                                memberID: jwtData.memberID,
+                                email: jwtData.email,
+                                pw: receive.newPw,
+                                nickname: receive.nickname
                             },
                             jwtKey
                         );
                         res.cookie("token", jwtToken);
                     }
-                    catch(err) { 
+                    catch(err) {
                         console.log("\ntoken renewal failed");
                         console.log(err);
-                        result.message = "계정 정보 갱신에 실패했습니다.";
+                        result.problem = 4; // 수정된 정보 갱신 실패
                     }
                 }
                 else {
                     console.log("\npostgresql err update info failed\n");
-                    result.message = "회원 정보 수정에 실패했습니다.";
+                    result.problem = 5; // DB 입력 실패
                 }
             }).catch(err => {
                 console.log("\npostgresql err update info failed");
                 console.log(err);
-                result.message = "회원 정보 수정에 실패했습니다.";
+                result.problem = 5; // DB 입력 실패
             }).finally(() => {
                 // mongoDB에 로그 저장
 
@@ -229,12 +239,13 @@ router.put("", (req, res) => {
             });
         }
         else {
-            result.message = "회원 정보를 올바르게 입력하세요.";
+            result.problem = 3; // 수정할 데이터 양식에 맞지 않음
+            res.send(result);
         }
     }
     else {
-        console.log("\ntoken expired\n");
-        result.message = "토큰이 만료됐습니다.";
+        result.problem = 1; // 인증 실패
+        res.send(result);
     }
 });
 
@@ -242,7 +253,7 @@ router.put("", (req, res) => {
 router.delete("", (req, res) => {
     const result = {
         success: false,
-        message: null
+        problem: 0
     };
 
     // jwt 인증
@@ -254,7 +265,7 @@ router.delete("", (req, res) => {
     }
     catch(err) {
         console.log("token auth err");
-        result.message = "토큰 인증 실패";
+        result.problem = 1; // 토큰 인증 실패
     }
 
     // postgresql에 회원 정보 삭제 요청
@@ -269,13 +280,15 @@ router.delete("", (req, res) => {
             }
             else {
                 console.log("\npostgresql err delete info failed");
+                result.problem = 2; // DB 변경 실패
             }
         }).catch(err => {
             console.log("\npostgresql err delete info failed");
             console.log(err);
+            result.problem = 2; // DB 변경 실패
         }).finally(() => {
             // mongoDB에 로그 저장
-        
+
 
             // 결과 보내기
             res.send(result);
@@ -283,7 +296,7 @@ router.delete("", (req, res) => {
     }
     else {
         // mongoDB에 로그 저장
-    
+
 
         // 결과 보내기
         res.send(result);

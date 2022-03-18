@@ -7,7 +7,7 @@ const STAR = "star";
 const VOTERLIST = "voteId";
 
 const upload = async () => {
-    
+
     // webtoonID 리스트 가져오기
     const sql = "SELECT webtoonID FROM webtoon;";
     let webtoonData = null;
