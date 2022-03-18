@@ -4,7 +4,7 @@ const router = express.Router();
 // const path = require("path");
 const pgClient = require("pg").Client;
 const pgConfig = require("../private/pgConfig");
-const es = require("elasticsearch");
+// const es = require("elasticsearch");
 const INDEX = "test";
 const es = require("es7");
 
