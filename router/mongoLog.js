@@ -6,10 +6,9 @@ const mongoLog = (apiValue, ipValue, inputData, outputData) => {
         mongoose.connect("mongodb://root:1234@192.168.160.4", { useNewUrlParser: true })
         .then(() => {
             const user = new logDocument({
-                date: null,
-                //new Date
-                ip: null,
-                receive: null
+                date: new Date,
+                ip: "test",
+                receive: "test"
             })
             user.save((err, res) => {
                 if (err) {
