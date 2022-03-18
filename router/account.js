@@ -5,7 +5,7 @@ const router = express.Router();
 
 const pg = require("../pgRequest");
 const requestIp = require("request-ip");
-const mongoLog = require("../logging");
+const mongoLog = require("./mongoLog.js");
 const jwt = require("jsonwebtoken");
 
 const jwtKey = require("../private/privateKey").jwtPrivateKey;
@@ -27,7 +27,7 @@ router.get("", (req, res) => {
         result.success = true;
         console.log(result.data); // data 형태 확인하기
 
-        // mongoDB에 로그 저장
+        mongoLog("account/get", "test", {}, result);
 
 
         // 결과 보내기

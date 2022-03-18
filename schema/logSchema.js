@@ -3,8 +3,10 @@ const mongoose = require("mongoose");
 
 const logSchema = mongoose.Schema({
     date: {type: Date, default: Date},
+    api: {type: String, required: true},
     ip: {type: String, required: true},
-    receive: "string",
+    request: {type: Object, required: true},
+    response: {type: Object, required: true},
 });
 
 const logDocument = mongoose.model("log", logSchema);
