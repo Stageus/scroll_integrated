@@ -23,7 +23,7 @@ const mongoLog = (apiValue, ipValue, inputData, outputData) => {
             })
             user.save((err, res) => {
                 if (err) {
-                    console.log("data insert error");
+                    console.log("data insert error", err);
                 } else {
                     console.log("data insert success");
                 }
