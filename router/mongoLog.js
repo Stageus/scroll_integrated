@@ -1,25 +1,15 @@
 const mongoose = require("mongoose")
-
-const userSchema = mongoose.Schema({
-    api: "string",
-    time: "Date",
-    ip: "string",
-    input: {},
-    output: {}
-});
-
-const userDocument = mongoose.model("user", userSchema);
+const logDocument = require("../schema/logSchema")
 
 const mongoLog = (apiValue, ipValue, inputData, outputData) => {
     try {
         mongoose.connect("mongodb://root:1234@192.168.160.4", { useNewUrlParser: true })
         .then(() => {
-            const user = new userDocument({
-                api: apiValue,
-                time: Date(),
-                ip: ipValue,
-                input: inputData,
-                output: outputData
+            const user = new logDocument({
+                date: null,
+                //new Date
+                ip: null,
+                receive: null
             })
             user.save((err, res) => {
                 if (err) {
