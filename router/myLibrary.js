@@ -82,7 +82,7 @@ router.post("", async (req, res) => {
     }
     const result = {
         success: false,
-        problem: 0
+        message: "즐겨찾기 등록 성공"
     }
 
     let auth = false;
@@ -92,7 +92,7 @@ router.post("", async (req, res) => {
         auth = true;
     } catch(err) {
         console.log("토큰 만료");
-        result.problem = 1; // 인증 실패
+        result.message = "회원정보 인증 실패"; // 인증 실패
     }
 
     if (auth) {
@@ -107,7 +107,7 @@ router.post("", async (req, res) => {
             await pg(sql, values);
         } catch(err) {
             console.log("err :", err);
-            result.problem = 2; // DB 저장 실패
+            result.message = "즐겨찾기 등록 오류"; // DB 저장 실패
         }
 
         try {
@@ -119,14 +119,14 @@ router.post("", async (req, res) => {
             });
         } catch(err) {
             console.log("err :", err);
-            result.problem = 3; // elasticsearch 저장 실패
+            result.message = "즐겨찾기 등록 오류"; // elasticsearch 저장 실패
         }
-
+        result.success = true;
         res.send(result);
     }
     else {
         console.log("인증 실패");
-        result.problem = 1; // 인증 실패
+        result.message = "회원정보 인증 실패"; // 인증 실패
         mongoLog("account/post", requestIp.getClientIp(req), receive, result);
         res.send(result);
     }
@@ -138,7 +138,7 @@ router.delete("", (req, res) => {
         webtoonID: req.body.webtoonID
     }
     const result = {
-        problem: 0,
+        message: "즐겨찾기 삭제 성공",
         success: false
     }
 
@@ -149,7 +149,7 @@ router.delete("", (req, res) => {
         auth = true;
     } catch(err) {
         console.log("인증 실패");
-        result.problem = 1; // 인증 실패
+        result.message = "회원정보 인증 실패"; // 인증 실패
     }
 
     if (auth) {
@@ -165,7 +165,7 @@ router.delete("", (req, res) => {
         }, err => {
             if (err) {
                 console.log("err :", err);
-                result.problem = 2; //elasticsearch 에러
+                result.message = "즐겨찾기 삭제 오류"; //elasticsearch 에러
             }
             else {
                 result.success = true;
@@ -176,6 +176,7 @@ router.delete("", (req, res) => {
     }
     else {
         console.log("인증 실패");
+        result.message = "회원정보 인증 실패";
         res.send(result);
     }
 })
