@@ -27,7 +27,7 @@ router.get("", (req, res) => {
         result.success = true;
         console.log(result.data); // data 형태 확인하기
 
-        mongoLog("account/get", "test", {}, result);
+        mongoLog("account/get", requestIp.getClientIp(req), {}, result);
 
 
         // 결과 보내기
