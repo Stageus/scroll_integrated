@@ -64,6 +64,7 @@ router.get("", (req, res) => {
                 result.webtoon = searchResult.hits.hits;
             }
 
+            mongoLog("account/post", requestIp.getClientIp(req), {}, result);
             res.send(result);
         });
     }
@@ -126,6 +127,7 @@ router.post("", async (req, res) => {
     else {
         console.log("인증 실패");
         result.problem = 1; // 인증 실패
+        mongoLog("account/post", requestIp.getClientIp(req), receive, result);
         res.send(result);
     }
 })
@@ -168,7 +170,7 @@ router.delete("", (req, res) => {
             else {
                 result.success = true;
             }
-
+            mongoLog("account/post", requestIp.getClientIp(req), receive, result);
             res.send(result);
         });
     }

@@ -91,11 +91,12 @@ router.get("", async (req, res) => {
             })
             result.webtoon = searchResult3.hits.hits;
         }
-        
+        mongoLog("account/post", requestIp.getClientIp(req), receive, result);
         res.send(result);
     }
     else {
         receive.problem = 1; // 토큰 인증 실패
+        mongoLog("account/post", requestIp.getClientIp(req), receive, result);
         res.send(result);
     }
 
@@ -130,7 +131,7 @@ router.get("/preview", (req, res) => {
         else {
 
         }
-
+        mongoLog("account/post", requestIp.getClientIp(req), {}, {});
         res.send(result);
     });
 })

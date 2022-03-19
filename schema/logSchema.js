@@ -6,7 +6,7 @@ const logSchema = mongoose.Schema({
     api: {type: String, required: true},
     ip: {type: String, required: true},
     request: {type: Object, required: true},
-    response: {type: Object, required: true},
+    response: {type: Object, required: true}
 });
 
 const logDocument = mongoose.model("log", logSchema);

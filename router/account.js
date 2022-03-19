@@ -5,7 +5,7 @@ const router = express.Router();
 
 const pg = require("../pgRequest");
 const requestIp = require("request-ip");
-const mongoLog = require("./mongoLog.js");
+const mongoLog = require("../logging.js");
 const jwt = require("jsonwebtoken");
 
 const jwtKey = require("../private/privateKey").jwtPrivateKey;
@@ -18,13 +18,19 @@ const nickForm = new RegExp("^[\w가-힣]{10}$");
 router.get("", (req, res) => {
     const result = {
         success: false,
-        data: null
+        data: null,
+        message: null,
+        email: null,
+        nickname: null
     };
 
     // jwt인증
     try {
         result.data = jwt.verify(req.cookies.token, jwtKey);
         result.success = true;
+        result.message = "인증 성공";
+        result.email = result.data.post.data.email;
+        result.nickname = result.data.post.data.nickname;
         console.log(result.data); // data 형태 확인하기
 
         mongoLog("account/get", requestIp.getClientIp(req), {}, result);
@@ -96,6 +102,7 @@ router.post("", (req, res) => {
             result.problem = 2; // 중복 확인 실패
         }).finally(() => {
             // mongoDB에 로그 저장
+            mongoLog("account/post", requestIp.getClientIp(req), receive, result);
         
         
             // 결과 보내기
@@ -154,7 +161,7 @@ router.post("/login", (req, res) => {
         result.problem = 1; // DB 에러
     }).finally(() => {
         // mongoDB에 로그 저장
-
+        mongoLog("account/post", requestIp.getClientIp(req), receive, result);
 
         // 결과 보내기
         res.send(result);
@@ -231,7 +238,7 @@ router.put("", (req, res) => {
                 result.problem = 5; // DB 입력 실패
             }).finally(() => {
                 // mongoDB에 로그 저장
-
+                mongoLog("account/post", requestIp.getClientIp(req), receive, result);
 
                 // 결과 보내기
                 res.send(result);
@@ -288,7 +295,7 @@ router.delete("", (req, res) => {
             result.problem = 2; // DB 변경 실패
         }).finally(() => {
             // mongoDB에 로그 저장
-
+            mongoLog("account/post", requestIp.getClientIp(req), {}, result);
 
             // 결과 보내기
             res.send(result);
