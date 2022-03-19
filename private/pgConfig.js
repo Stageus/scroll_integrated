@@ -1,6 +1,6 @@
 
 const pgConfig = {
-    user: "ubuntu", // db 계정
+    user: "postgres", // db 계정으로 변경해야함
     host: "postgres", // service 이름이 host가 됨
     // host: "localhost", // 테스트할 때만 사용
     database: "webtoon", // db 이름
