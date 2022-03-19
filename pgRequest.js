@@ -31,6 +31,7 @@ const pgRequest = (sql, values) =>
             .then(res => {
                 result.success = true;
                 result.data = res.rows;
+                // console.log(result.data);
                 resolve(result);
             }).catch(err => {
                 console.log("SQL ERROR:", err);
