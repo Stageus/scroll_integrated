@@ -137,7 +137,7 @@ router.post("/login", (req, res) => {
             if (post.data.length > 0) {
                 const jwtToken = jwt.sign(
                     {
-                        "memberID": post.data[0].memberID,
+                        "memberid": post.data[0].memberid,
                         "email": post.data[0].email,
                         "pw": post.data[0].password,
                         "nickname": post.data[0].nickname

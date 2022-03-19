@@ -88,7 +88,7 @@ router.post("", async (req, res) => {
     let auth = false;
     let jwtData = null;
     try {
-        jwtData = jwt.verify(res.cookies.token, jwtKey);
+        jwtData = jwt.verify(req.cookies.token, jwtKey);
         auth = true;
     } catch(err) {
         console.log("토큰 만료");
@@ -96,12 +96,13 @@ router.post("", async (req, res) => {
     }
 
     if (auth) {
-        const esClient = new es.Client({
-            node: "https://localhost:9200/" // 수정해야함.
-        });
+    //     const esClient = new es.Client({
+    //         node: "https://localhost:9200/" // 수정해야함.
+    //     });
 
-        const sql = "INSERT * INTO library (webtoonID, memberID) VALUES ($1, $2)";
-        const values = [receive.webtoonID, jwtData.memberID];
+        const sql = "INSERT INTO library (webtoonID, memberID) VALUES ($1, $2)";
+        const values = [receive.webtoonID, jwtData.memberid];
+        console.log(jwtData)
 
         try {
             await pg(sql, values);
@@ -110,17 +111,17 @@ router.post("", async (req, res) => {
             result.message = "즐겨찾기 등록 오류"; // DB 저장 실패
         }
 
-        try {
-            await esClient.index({
-                index: jwtData.memberID + INDEX,
-                body: {
-                    webtoonID: receive.webtoonID
-                }
-            });
-        } catch(err) {
-            console.log("err :", err);
-            result.message = "즐겨찾기 등록 오류"; // elasticsearch 저장 실패
-        }
+    //     try {
+    //         await esClient.index({
+    //             index: jwtData.memberid + INDEX,
+    //             body: {
+    //                 webtoonID: receive.webtoonID
+    //             }
+    //         });
+    //     } catch(err) {
+    //         console.log("err :", err);
+    //         result.message = "즐겨찾기 등록 오류"; // elasticsearch 저장 실패
+    //     }
         result.success = true;
         res.send(result);
     }
@@ -133,7 +134,7 @@ router.post("", async (req, res) => {
 })
 
 // 즐겨찾기 삭제
-router.delete("", (req, res) => {
+router.delete("", async(req, res) => {
     const receive = {
         webtoonID: req.body.webtoonID
     }
@@ -145,7 +146,7 @@ router.delete("", (req, res) => {
     let auth = false;
     let jwtData = null;
     try {
-        jwtData = jwt.verify(res.cookies.token, jwtKey);
+        jwtData = jwt.verify(req.cookies.token, jwtKey);
         auth = true;
     } catch(err) {
         console.log("인증 실패");
@@ -153,26 +154,39 @@ router.delete("", (req, res) => {
     }
 
     if (auth) {
-        const esClient = new es.Client({
-            node: "https://localhost:9200/" // 수정해야함.
-        });
+        const sql = "DELETE FROM library WHERE webtoonid=$1 and memberid=$2";
+        const values = [receive.webtoonID, jwtData.memberid];
 
-        esClient.deleteByQuery({
-            index: INDEX,
-            body:{
+        try {
+            await pg(sql, values);
+        } catch(err) {
+            console.log("err :", err);
+            result.message = "즐겨찾기 삭제 오류"; // DB 저장 실패
+        }
 
-            }
-        }, err => {
-            if (err) {
-                console.log("err :", err);
-                result.message = "즐겨찾기 삭제 오류"; //elasticsearch 에러
-            }
-            else {
-                result.success = true;
-            }
-            mongoLog("account/post", requestIp.getClientIp(req), receive, result);
-            res.send(result);
-        });
+        // const esClient = new es.Client({
+        //     node: "https://localhost:9200/" // 수정해야함.
+        // });
+
+        // esClient.deleteByQuery({
+        //     index: INDEX,
+        //     body:{
+
+        //     }
+        // }, err => {
+        //     if (err) {
+        //         console.log("err :", err);
+        //         result.message = "즐겨찾기 삭제 오류"; //elasticsearch 에러
+        //     }
+        //     else {
+        //         result.success = true;
+        //     }
+        //     mongoLog("account/post", requestIp.getClientIp(req), receive, result);
+        //     res.send(result);
+        // });
+
+        result.success = true;
+        res.send(result);
     }
     else {
         console.log("인증 실패");
@@ -180,3 +194,5 @@ router.delete("", (req, res) => {
         res.send(result);
     }
 })
+
+module.exports = router;

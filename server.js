@@ -21,6 +21,9 @@ app.use("/account", account);
 const webtoon = require("./router/webtoon");
 app.use("/webtoon", webtoon);
 
+const mylibrary = require("./router/myLibrary");
+app.use("/myLibrary", mylibrary);
+
 app.listen(port, (req, res) => {
     console.log(port, "번에 서버 실행");
 });
