@@ -19,7 +19,7 @@ router.get("", (req, res) => {
     const result = {
         success: false,
         data: null,
-        message: null,
+        message: "회원정보 불러오기 실패",
         email: null,
         nickname: null
     };
@@ -28,7 +28,7 @@ router.get("", (req, res) => {
     try {
         result.data = jwt.verify(req.cookies.token, jwtKey);
         result.success = true;
-        result.message = "인증 성공";
+        result.message = "회원정보 불러오기 성공";
         result.email = result.data.post.data.email;
         result.nickname = result.data.post.data.nickname;
         console.log(result.data); // data 형태 확인하기
@@ -53,8 +53,8 @@ router.post("", (req, res) => {
         // 등등 회원가입 정보
     };
     const result = {
-        problem: 0,
-        success: false
+        success: false,
+        message: "회원 가입에 실패하였습니다."
     };
 
     // 회원 정보 조건 확인(예외처리)
@@ -67,7 +67,7 @@ router.post("", (req, res) => {
             if (post.succss) {
                 if (post.data.length > 0) {
                     console.log("\nalready exist info\n");
-                    result.problem = 3; // 중복 회원 존재
+                    result.message = "중복된 이메일/별명이 존재합니다."; // 중복 회원 존재
                 }
                 else {
                     // postgresql에 회원정보 저장 요청
@@ -77,29 +77,28 @@ router.post("", (req, res) => {
                     .then(post => {
                         if (post.success) {
                             console.log("success insert info to DB");
+                            result.message = "회원 가입에 성공하였습니다."
                             result.success = true;
                         }
                         else {
                             console.log("\npostgresql error insert info failed\n");
-                            result.message = "오류가 발생했습니다";
-                            result.problem = 4; // 데이터 입력 실패
+                            result.message = "오류가 발생했습니다"; // 데이터 입력 실패
                         }
                     }).catch(err => {
                         console.log("\npostgresql error insert info failed\n");
                         console.log(err);
-                        result.problem = 4; // 데이터 입력 실패
+                        result.message = "오류가 발생했습니다"; // 데이터 입력 실패
                     });
                 }
             }
             else {
                 console.log("\npostgresql error check info failed\n");
-                result.message = "에러가 발생했습니다"
-                result.problem = 3; // 중복 회원 존재
+                result.message = "오류가 발생했습니다" // 중복 회원 존재
             }
         }).catch(err => {
             console.log("\npostgresql error check info failed\n");
             console.log(err);
-            result.problem = 2; // 중복 확인 실패
+            result.message = "오류가 발생했습니다" // 중복 확인 실패
         }).finally(() => {
             // mongoDB에 로그 저장
             mongoLog("account/post", requestIp.getClientIp(req), receive, result);
@@ -110,7 +109,7 @@ router.post("", (req, res) => {
         })
     }
     else {
-        result.problem = 1; // 데이터 양식에 맞지 않음
+        result.message = "올바른 형식으로 작성해주십시오." // 데이터 양식에 맞지 않음
         res.send(result);
     }
 });
@@ -123,7 +122,7 @@ router.post("/login", (req, res) => {
     };
     const result = {
         success: false,
-        problem: 0
+        message: "로그인 실패"
     }; 
 
     // postgresql에 같은 회원 정보 요청
@@ -145,20 +144,21 @@ router.post("/login", (req, res) => {
                 );
                 res.cookie("token", jwtToken);
                 result.success = true;
+                result.message = "로그인 성공";
             }
             else {
                 console.log("member info not exist");
-                result.problem = 2; // 회원이 존재하지 않음
+                result.message = "이메일 또는 비밀번호를 확인해주십시오."; // 회원이 존재하지 않음
             }
         }
         else {
-            result.problem = 1; // DB 에러
+            result.message = "로그인 오류"; // DB 에러
             console.log("\npostgresql err get member info failed\n");
         }
     }).catch(err => {
         console.log("\npostgresql err get member info failed");
         console.log(err);
-        result.problem = 1; // DB 에러
+        result.message = "로그인 오류"; // DB 에러
     }).finally(() => {
         // mongoDB에 로그 저장
         mongoLog("account/post", requestIp.getClientIp(req), receive, result);
