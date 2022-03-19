@@ -10,9 +10,9 @@ const jwt = require("jsonwebtoken");
 
 const jwtKey = require("../private/privateKey").jwtPrivateKey;
 
-const emailForm = new RegExp("^[\w][\_\-\w]{2,19}@\w+.\w+$");
+const emailForm = new RegExp("^[\_\-\w@\.]{2,19}$");
 const pwForm = new RegExp("^[\w\!\@\#\$\%\^\&\*\-\_]{5,20}$");
-const nickForm = new RegExp("^[\w가-힣]{10}$");
+const nickForm = new RegExp("^[\w가-힣]{1,10}$");
 
 // 내 정보 가져오기
 router.get("", (req, res) => {
@@ -56,6 +56,8 @@ router.post("", (req, res) => {
         success: false,
         message: "회원 가입에 실패하였습니다."
     };
+    console.log(receive.email)
+    console.log(receive.email.match(emailForm))
 
     // 회원 정보 조건 확인(예외처리)
     if (receive.email.match(emailForm) && receive.pw.match(pwForm) && receive.nickname.match(nickForm)) {
