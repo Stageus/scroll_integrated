@@ -11,7 +11,7 @@ const es = require("es7");
 const redisClient = require("redis").createClient();
 const redis = require("../redis");
 
-const mongoLog = require("./mongoLog");
+const mongoLog = require("../logging");
 
 router.get("/redis/getAllViewCount", async (req, res) => {
     const result = {

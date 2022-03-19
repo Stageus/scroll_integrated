@@ -20,12 +20,11 @@ router.get("", async (req, res) => {
     const receive = {
         weekday: req.query.weekday,
         genre: req.query.genre,
-        platform: req.query.platform,
-        library: req.query.library // bool
+        platform: req.query.platform
     };
     const result = {
         success: false,
-        problem: 0,
+        message: "웹툰 불러오기 실패",
         webtoon: [
             // {
             //     id: null,
@@ -48,7 +47,7 @@ router.get("", async (req, res) => {
         jwtData = jwt.verify(res.cookies.token, jwtKey);
         auth = true;
     } catch(err) {
-        receive.problem = 1; // 토큰 인증 실패
+        result.message = "회원정보 인증 실패"; // 토큰 인증 실패
     }
 
     if (auth) {
@@ -95,7 +94,7 @@ router.get("", async (req, res) => {
         res.send(result);
     }
     else {
-        receive.problem = 1; // 토큰 인증 실패
+        result.message = "회원정보 인증 실패"; // 토큰 인증 실패
         mongoLog("account/post", requestIp.getClientIp(req), receive, result);
         res.send(result);
     }

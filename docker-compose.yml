@@ -4,8 +4,8 @@ networks:
     external: true
 services:
   web:
-    image: seasun245/scroll_stageus:latest
-    # build: .
+    # image: seasun245/scroll_stageus:latest
+    build: .
     container_name: scroll
     ports:
       - "3000:3000"
