@@ -1,27 +1,25 @@
+const mongoose = require("mongoose")
+const logDocument = require("../schema/logSchema")
 
-const mongoose = require("mongoose");
-const logDocument = require("./schema/logSchema.js");
-
-const sendLog = (etc) => {
-    mongoose.connect("url")
+const mongoLog = (apiValue, ipValue, inputData, outputData) => {
+    mongoose.connect("mongodb://root:1234@192.168.160.4", { useNewUrlParser: true })
     .then(() => {
-        const log = new logDocument({
-            something: "something"
-        });
-
-        log.save((err, res) => {
+        const user = new logDocument({
+            date: new Date,
+            api: apiValue,
+            ip: ipValue,
+            request: inputData,
+            response: outputData
+        })
+        user.save((err, res) => {
             if (err) {
-                console.log("m", err);
+                console.log("insert error:", err);
             }
-            else {
-                console.log("m");
-                console.log("log res:", res);
-            }
-        });
+        })
     })
-    .catch(err => {
-        console.log("mongoose connect error:", err);
-    });
-};
+    .catch((err) => {
+        console.log(err);
+    })
+}
 
-module.exports = sendLog;
+module.exports = mongoLog;
