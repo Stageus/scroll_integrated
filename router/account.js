@@ -153,7 +153,7 @@ router.post("/login", (req, res) => {
                     },
                     jwtKey
                 );
-                // res.cookie("token", jwtToken);
+                res.cookie("token", jwtToken);
                 result.token = jwtToken;
                 result.success = true;
                 result.message = "로그인 성공";

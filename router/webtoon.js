@@ -42,16 +42,37 @@ router.get("", async (req, res) => {
         ]
     };
 
-    let auth = false;
+    // let sql = 
+    // `SELECT w.webtoonid FROM
+    // toon.webtoon AS w
+    // JOIN toon.cycle AS c
+    // ON w.webtoonid = c.webtoonid
+    // JOIN toon.toongenre AS t
+    // ON c.webtoonid = t.webtoonid`;
+    // if (receive.weekday != [] || receive.genre != [] || receive.platform != []) {
+    //     sql += " WHERE"
+    //     if (receive.weekday != []) {
+    //         sql += " c.cycle=$1"
+    //     }
+    //     if (receive.genre != []) {
+    //         sql += " t.genreid=$1"
+    //     }
+    //     if (receive.platform != []) {
+    //         sql += " w.platform="
+    //     }
+    // }조인말고 각각하기
+    const auth = false;
     let jwtData = null;
     try {
         jwtData = jwt.verify(res.cookies.token, jwtKey);
         auth = true;
     } catch(err) {
-        result.message = "회원정보 없음"; // 토큰 인증 실패
+        result.message += ", 회원정보 없음"; // 토큰 인증 실패
     }
 
     res.send(result); // 추후 삭제
+
+
 
     // if (auth) {
     //     const esClient = new es.Client({
