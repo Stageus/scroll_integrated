@@ -177,10 +177,15 @@ const getAvgStar = async (webtoonId) => {
     return result;
 }
 
+const addHistory = () => {
+
+}
+
 module.exports = {
     addViewCount,
     getViewCount,
     votersCount,
     addStar,
-    getAvgStar
+    getAvgStar,
+    addHistory
 };

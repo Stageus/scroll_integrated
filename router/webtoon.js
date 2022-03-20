@@ -13,6 +13,8 @@ const jwtKey = require("../private/privateKey").jwtPrivateKey;
 const WEBTOON = "webtoon";
 const LIBRARY = "library";
 
+const redis = require("../redis.js");
+
 // 요일, 플랫폼, 장르, 즐겨찾기 여부
 
 // 웹툰 정보 불러오기
@@ -134,6 +136,30 @@ router.get("/preview", (req, res) => {
         mongoLog("account/post", requestIp.getClientIp(req), {}, {});
         res.send(result);
     });
+})
+
+router.get("/click", (req, res) => {
+    const receive = {
+        webtoonid: req.body.webtoonID
+    }
+    const result = {
+        success: false,
+        message: "클릭 기록 실패"
+    }
+
+    try {
+        redis.addViewCount();
+        redis.addHistory();
+        result.success = true;
+        result.message = "클릭 기록 성공";
+    } catch(err) {
+        result.message = "클릭 기록 오류";
+        console.log(err);
+    }
+    //로깅
+    mongoLog("account/click", requestIp.getClientIp(req), receive, result);
+    
+    res.send(result);
 })
 
 module.exports = router;
