@@ -62,7 +62,7 @@ router.post("", (req, res) => {
     // 회원 정보 조건 확인(예외처리)
     if (receive.email.match(emailForm) && receive.pw.match(pwForm) && receive.nickname.match(nickForm)) {
         // postgresql의 회원 정보 중복 확인. 중복 불가 컬럼 email, nickname
-        const sql = "SELECT * FROM member WHERE email=$1 OR nickname=$2;";
+        const sql = "SELECT * FROM toon.member WHERE email=$1 OR nickname=$2;";
         const values = [receive.email, receive.nickname]; // 다른 중복 불가 회원 정보도 포함하기.
         pg(sql, values)
         .then(post => {
@@ -73,7 +73,7 @@ router.post("", (req, res) => {
                 }
                 else {
                     // postgresql에 회원정보 저장 요청
-                    const sql2 = "INSERT INTO member (email, password, nickname) VALUES ($1, $2, $3);";
+                    const sql2 = "INSERT INTO toon.member (email, password, nickname) VALUES ($1, $2, $3);";
                     const values2 = [receive.email, receive.pw, receive.nickname];
                     pg(sql2, values2)
                     .then(post => {
@@ -128,7 +128,7 @@ router.post("/login", (req, res) => {
     }; 
 
     // postgresql에 같은 회원 정보 요청
-    let sql = "SELECT * FROM member WHERE email=$1 and password=$2;";
+    let sql = "SELECT * FROM toon.member WHERE email=$1 and password=$2;";
     const values = [receive.email, receive.pw];
     pg(sql, values)
     .then(post => {
@@ -205,7 +205,7 @@ router.put("", (req, res) => {
         // 회원 정보 조건 확인(예외처리)
         if (receive.newPw.match(pwForm) && receive.nickname.match(nickForm)) {
             // postgresql에 회원 정보 수정 요청
-            const sql = "UPDATE member SET password=$1 WHERE email=$2;";
+            const sql = "UPDATE toon.member SET password=$1 WHERE email=$2;";
             const values = [receive.pw, receive.email];
             pg(sql, values)
             .then(post => {
@@ -279,7 +279,7 @@ router.delete("", (req, res) => {
 
     // postgresql에 회원 정보 삭제 요청
     if (validToken) {
-        const sql = "DELETE FROM member WHERE email=$1;";
+        const sql = "DELETE FROM toon.member WHERE email=$1;";
         const values = [jwtData.email];
         pg(sql, values)
         .then(post => {

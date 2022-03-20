@@ -46,6 +46,7 @@ services:
     networks:
       scroll:
         ipv4_address: 192.168.160.4
+    user: postgres
   # elasticsearch:
   #   container_name: elasticsearch
   #   image: elasticsearch:7.17.0

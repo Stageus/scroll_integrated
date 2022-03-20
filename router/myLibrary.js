@@ -100,7 +100,7 @@ router.post("", async (req, res) => {
     //         node: "https://localhost:9200/" // 수정해야함.
     //     });
 
-        const sql = "INSERT INTO library (webtoonID, memberID) VALUES ($1, $2)";
+        const sql = "INSERT INTO toon.library (webtoonID, memberID) VALUES ($1, $2)";
         const values = [receive.webtoonID, jwtData.memberid];
         console.log(jwtData)
 
@@ -154,7 +154,7 @@ router.delete("", async(req, res) => {
     }
 
     if (auth) {
-        const sql = "DELETE FROM library WHERE webtoonid=$1 and memberid=$2";
+        const sql = "DELETE FROM toon.library WHERE webtoonid=$1 and memberid=$2";
         const values = [receive.webtoonID, jwtData.memberid];
 
         try {
