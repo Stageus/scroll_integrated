@@ -10,9 +10,9 @@ const jwt = require("jsonwebtoken");
 
 const jwtKey = require("../private/privateKey").jwtPrivateKey;
 
-const emailForm = new RegExp("^[\_\-\w@\.]{2,19}$");
-const pwForm = new RegExp("^[\w\!\@\#\$\%\^\&\*\-\_]{5,20}$");
-const nickForm = new RegExp("^[\w가-힣]{1,10}$");
+const emailForm = new RegExp("^[a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,4}$");
+const pwForm = new RegExp("^[A-Za-z0-9]{4,20}$");
+const nickForm = new RegExp("^[가-힣a-zA-Z0-9]{2,10}$");
 
 // 내 정보 가져오기
 router.get("", (req, res) => {
@@ -60,7 +60,8 @@ router.post("", (req, res) => {
     console.log(receive.email.match(emailForm))
 
     // 회원 정보 조건 확인(예외처리)
-    if (receive.email.match(emailForm) && receive.pw.match(pwForm) && receive.nickname.match(nickForm)) {
+    if (receive.email.match(emailForm) && receive.pw.match(pwForm) && receive.nickname.match(nickForm) 
+    && receive.email.length < 40 && !typeof receive.email && !typeof receive.pw && !typeof receive.nickname) {
         // postgresql의 회원 정보 중복 확인. 중복 불가 컬럼 email, nickname
         const sql = "SELECT * FROM toon.member WHERE email=$1 OR nickname=$2;";
         const values = [receive.email, receive.nickname]; // 다른 중복 불가 회원 정보도 포함하기.
