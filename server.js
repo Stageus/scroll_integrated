@@ -3,6 +3,16 @@ const express = require("express");
 const app = express();
 const port = 3000;
 const path = require("path");
+const cors = require("cors");
+
+const corsOptions = {
+    origin: '*',
+    credentials: true,
+    methods: ['POST'],
+    allowedHeaders: ['Content-Type', 'Authorization'],
+};
+app.options('*', cors(corsOptions));
+app.use(cors(corsOptions));
 
 const cookieParser = require('cookie-parser');
 app.use(cookieParser());
