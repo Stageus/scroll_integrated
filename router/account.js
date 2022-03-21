@@ -15,7 +15,10 @@ const pwForm = new RegExp("^[A-Za-z0-9]{4,20}$");
 const nickForm = new RegExp("^[가-힣a-zA-Z0-9]{2,10}$");
 
 // 내 정보 가져오기
-router.get("", (req, res) => {
+router.post("/info", (req, res) => {//post account/info로 바꾸기
+    const receive = {
+        token: req.body.token
+    }
     const result = {
         success: false,
         data: null,
@@ -26,7 +29,7 @@ router.get("", (req, res) => {
 
     // jwt인증
     try {
-        result.data = jwt.verify(req.cookies.token, jwtKey);
+        result.data = jwt.verify(receive.token, jwtKey);
         result.success = true;
         result.message = "회원정보 불러오기 성공";
         result.email = result.data.email;
@@ -183,6 +186,7 @@ router.post("/login", (req, res) => {
 // 회원정보 수정
 router.put("", (req, res) => {
     const receive = {
+        token: req.body.token,
         nickname: req.body.nickname,
         newPw: req.body.newPw,
         currentPw: req.body.currentPw
@@ -196,7 +200,7 @@ router.put("", (req, res) => {
     const validToken = false;
     const jwtData = null;
     try {
-        jwtData = jwt.verify(req.cookies.token);
+        jwtData = jwt.verify(receive.token);
         const pw = jwtData.pw;
         if (pw != currentPw) {
             result.problem = 2; // 현재 비밀번호 틀림
@@ -270,6 +274,9 @@ router.put("", (req, res) => {
 
 // 회원 탈퇴
 router.delete("", (req, res) => {
+    const receive = {
+        token: req.body.token
+    }
     const result = {
         success: false,
         problem: 0
@@ -279,7 +286,7 @@ router.delete("", (req, res) => {
     const validToken = false;
     const jwtData = null;
     try {
-        jwtData = jwt.verify(res.cookies.token, jwtKey);
+        jwtData = jwt.verify(receive.token, jwtKey);
         validToken = true;
     }
     catch(err) {

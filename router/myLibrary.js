@@ -15,6 +15,9 @@ const LIBRARY = "library";
 
 // 즐겨찾기 정보 불러오기
 router.get("", (req, res) => {
+    const receive = {
+        token: req.body.string
+    }
 
     const result = {
         success: false,
@@ -38,7 +41,7 @@ router.get("", (req, res) => {
     let auth = false;
     let jwtData = null;
     try {
-        jwtData = jwt.verify(res.cookies.token, jwtKey);
+        jwtData = jwt.verify(receive.token, jwtKey);
         auth = true;
     } catch(err) {
         console.log("토큰 만료");
@@ -78,6 +81,7 @@ router.get("", (req, res) => {
 // 즐겨찾기 등록
 router.post("", async (req, res) => {
     const receive = {
+        token: req.body.token,
         webtoonID: req.body.webtoonID
     }
     const result = {
@@ -88,9 +92,11 @@ router.post("", async (req, res) => {
     let auth = false;
     let jwtData = null;
     try {
-        jwtData = jwt.verify(req.cookies.token, jwtKey);
+        // console.log(jwt.verify(req.cookies.token, jwtKey));
+        jwtData = jwt.verify(receive.token, jwtKey);
         auth = true;
     } catch(err) {
+        console.log(err);
         console.log("토큰 만료");
         result.message = "회원정보 인증 실패"; // 인증 실패
     }
@@ -136,6 +142,7 @@ router.post("", async (req, res) => {
 // 즐겨찾기 삭제
 router.delete("", async(req, res) => {
     const receive = {
+        token: req.body.token,
         webtoonID: req.body.webtoonID
     }
     const result = {
@@ -146,9 +153,11 @@ router.delete("", async(req, res) => {
     let auth = false;
     let jwtData = null;
     try {
-        jwtData = jwt.verify(req.cookies.token, jwtKey);
+        // console.log(jwt.verify(req.cookies.token, jwtKey));
+        jwtData = jwt.verify(req.body.token, jwtKey);
         auth = true;
     } catch(err) {
+        console.log(err);
         console.log("인증 실패");
         result.message = "회원정보 인증 실패"; // 인증 실패
     }

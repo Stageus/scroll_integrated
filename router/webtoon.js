@@ -15,61 +15,84 @@ const LIBRARY = "library";
 
 const redis = require("../redis.js");
 
+const changeReq = (req) => {
+    if (req === "") {
+        
+    } else if (req === "") {
+
+    }
+}
+
 // 요일, 플랫폼, 장르, 즐겨찾기 여부
 
 // 웹툰 정보 불러오기
-router.get("", async (req, res) => {
+router.post("", async (req, res) => {
     const receive = {
-        weekday: req.query.weekday,
-        genre: req.query.genre,
-        platform: req.query.platform
+        token: req.body.token,
+        weekday: req.body.weekday,
+        genre: req.body.genre,
+        platform: req.body.platform
     };
     const result = {
         success: false,
         message: "웹툰 불러오기 성공",
         webtoon: [
             {
-                id: 1,
+                webtoonID: 1,
                 title: "쇼미더럭키짱!",
-                detail: "고작 18살 나이로 부산을 꿇린 남자 강건마\n메마른 그의 가슴을 송두리째 불태울 존재가 나타났으니\,\n그것은 \'힙합\'(Hip - hop)!\n래퍼가 되기 위해선 서울을 통합해야 하는 법!\n사나이 강건마! 오늘도 래퍼가 되기 위해 사람을 팬다!\n참고로 두 작가 모두 랩이 뭔지 모른다!",
-                genre: ["액션"],
-                weekday: [1],
-                platform: "naver",
                 thumbnail: "https://shared-comic.pstatic.net/thumb/webtoon/783054/thumbnail/thumbnail_IMAG10_6917f3d9-c5bb-4bfd-aa04-a288f7b252af.jpg",
                 link: "https://comic.naver.com/webtoon/list?titleId=783054&weekday=mon",
-                author: ["박태준"]
+                author: "박태준/김성모"
             }
         ]
     };
 
-    // let sql = 
-    // `SELECT w.webtoonid FROM
-    // toon.webtoon AS w
-    // JOIN toon.cycle AS c
-    // ON w.webtoonid = c.webtoonid
-    // JOIN toon.toongenre AS t
-    // ON c.webtoonid = t.webtoonid`;
-    // if (receive.weekday != [] || receive.genre != [] || receive.platform != []) {
-    //     sql += " WHERE"
-    //     if (receive.weekday != []) {
-    //         sql += " c.cycle=$1"
-    //     }
-    //     if (receive.genre != []) {
-    //         sql += " t.genreid=$1"
-    //     }
-    //     if (receive.platform != []) {
-    //         sql += " w.platform="
-    //     }
-    // }조인말고 각각하기
+    if (Array.isArray(receive.platform)) {
+        let sql = "SELECT webtoonid FROM toon.webtoon WHERE";
+        for (let i = 0; i < receive.platform.length; i++) {
+            changeReq(receive.platform[i]);
+            sql += " platformid=$" + i + " OR";
+        }
+        sql += " 1=1;"
+        let values = receive.platform;
+        await pg(sql, values);
+        console.log(sql);
+    }
+
+    if (Array.isArray(receive.genre)) {
+        let sql2 = "SELECT webtoonid FROM toon.toongenre WHERE";
+        for (let i = 0; i < receive.genre.length; i++) {
+            changeReq(receive.genre[i]);
+            sql2 += " genreid=$" + i + " OR";
+        }
+        sql2 += " 1=1;"
+        let values2 = receive.genre;
+        await pg(sql2, values2);
+        console.log(sql2);
+    }
+
+    if (Array.isArray(receive.weekday)) {
+        let sql3 = "SELECT webtoonid FROM toon.cycle WHERE";
+        for (let i = 0; i < receive.weekday.length; i++) {
+            changeReq(receive.weekday[i]);
+            sql3 += " cycle=$" + i + " OR";
+        }
+        sql3 += " 1=1;"
+        let values3 = receive.weekday;
+        await pg(sql3, values3);
+        console.log(sql3);
+    }
+
     const auth = false;
     let jwtData = null;
     try {
-        jwtData = jwt.verify(res.cookies.token, jwtKey);
+        jwtData = jwt.verify(receive.token, jwtKey);
         auth = true;
     } catch(err) {
         result.message += ", 회원정보 없음"; // 토큰 인증 실패
     }
 
+    result.success = true;
     res.send(result); // 추후 삭제
 
 
