@@ -330,6 +330,7 @@ router.delete("", (req, res) => {
 
 });
 
+//중복확인
 router.post("/doubleCheck", (req, res) => {
     const receive = {
         type: req.body.type,
