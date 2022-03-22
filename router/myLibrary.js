@@ -86,7 +86,7 @@ router.post("", async (req, res) => {
     }
     const result = {
         success: false,
-        message: "즐겨찾기 등록 성공"
+        message: "즐겨찾기 등록 실패"
     }
 
     let auth = false;
@@ -112,6 +112,8 @@ router.post("", async (req, res) => {
 
         try {
             await pg(sql, values);
+            result.success = true;
+            result.message = "즐겨찾기 등록 성공";
         } catch(err) {
             console.log("err :", err);
             result.message = "즐겨찾기 등록 오류"; // DB 저장 실패
@@ -128,13 +130,13 @@ router.post("", async (req, res) => {
     //         console.log("err :", err);
     //         result.message = "즐겨찾기 등록 오류"; // elasticsearch 저장 실패
     //     }
-        result.success = true;
+        mongoLog("myLibrary/post", requestIp.getClientIp(req), receive, result);
         res.send(result);
     }
     else {
         console.log("인증 실패");
         result.message = "회원정보 인증 실패"; // 인증 실패
-        mongoLog("account/post", requestIp.getClientIp(req), receive, result);
+        mongoLog("myLibrary/post", requestIp.getClientIp(req), receive, result);
         res.send(result);
     }
 })
@@ -146,7 +148,7 @@ router.delete("", async(req, res) => {
         webtoonID: req.body.webtoonID
     }
     const result = {
-        message: "즐겨찾기 삭제 성공",
+        message: "즐겨찾기 삭제 실패",
         success: false
     }
 
@@ -168,6 +170,8 @@ router.delete("", async(req, res) => {
 
         try {
             await pg(sql, values);
+            result.success = true;
+            result.message = "즐겨찾기 삭제 성공";
         } catch(err) {
             console.log("err :", err);
             result.message = "즐겨찾기 삭제 오류"; // DB 저장 실패
@@ -194,12 +198,13 @@ router.delete("", async(req, res) => {
         //     res.send(result);
         // });
 
-        result.success = true;
+        mongoLog("myLibrary/delete", requestIp.getClientIp(req), receive, result);
         res.send(result);
     }
     else {
         console.log("인증 실패");
         result.message = "회원정보 인증 실패";
+        mongoLog("myLibrary/delete", requestIp.getClientIp(req), receive, result);
         res.send(result);
     }
 })

@@ -112,17 +112,23 @@ router.post("", (req, res) => {
             else {
                 console.log("\npostgresql error check info failed1\n");
                 result.message = "오류가 발생했습니다" // 중복 회원 존재
+                mongoLog("account/post", requestIp.getClientIp(req), receive, result);
+
                 res.send(result);
             }
         }).catch(err => {
             console.log("\npostgresql error check info failed2\n");
             console.log(err);
             result.message = "오류가 발생했습니다" // 중복 확인 실패
+            mongoLog("account/post", requestIp.getClientIp(req), receive, result);
+
             res.send(result);
         })
     }
     else {
         result.message = "올바른 형식으로 작성해주십시오." // 데이터 양식에 맞지 않음
+        mongoLog("account/post", requestIp.getClientIp(req), receive, result);
+
         res.send(result);
     }
 });
@@ -176,7 +182,7 @@ router.post("/login", (req, res) => {
         result.message = "로그인 오류"; // DB 에러
     }).finally(() => {
         // mongoDB에 로그 저장
-        mongoLog("account/post", requestIp.getClientIp(req), receive, result);
+        mongoLog("account/login/post", requestIp.getClientIp(req), receive, result);
 
         // 결과 보내기
         res.send(result);
@@ -254,7 +260,7 @@ router.put("", (req, res) => {
                 result.problem = 5; // DB 입력 실패
             }).finally(() => {
                 // mongoDB에 로그 저장
-                mongoLog("account/post", requestIp.getClientIp(req), receive, result);
+                mongoLog("account/put", requestIp.getClientIp(req), receive, result);
 
                 // 결과 보내기
                 res.send(result);
@@ -263,11 +269,15 @@ router.put("", (req, res) => {
         }
         else {
             result.problem = 3; // 수정할 데이터 양식에 맞지 않음
+            mongoLog("account/put", requestIp.getClientIp(req), receive, result);
+
             res.send(result);
         }
     }
     else {
         result.problem = 1; // 인증 실패
+        mongoLog("account/put", requestIp.getClientIp(req), receive, result);
+
         res.send(result);
     }
 });
@@ -314,7 +324,7 @@ router.delete("", (req, res) => {
             result.problem = 2; // DB 변경 실패
         }).finally(() => {
             // mongoDB에 로그 저장
-            mongoLog("account/post", requestIp.getClientIp(req), {}, result);
+            mongoLog("account/delete", requestIp.getClientIp(req), {}, result);
 
             // 결과 보내기
             res.send(result);
@@ -322,6 +332,8 @@ router.delete("", (req, res) => {
     }
     else {
         // mongoDB에 로그 저장
+        mongoLog("account/delete", requestIp.getClientIp(req), receive, result);
+
 
 
         // 결과 보내기
@@ -374,13 +386,15 @@ router.post("/doubleCheck", (req, res) => {
             result.message = "중복체크 오류"; // DB 에러
         }).finally(() => {
             // mongoDB에 로그 저장
-            mongoLog("account/post", requestIp.getClientIp(req), receive, result);
+            mongoLog("account/doubleCheck", requestIp.getClientIp(req), receive, result);
 
             // 결과 보내기
             res.send(result);
         });
     } else {
         result.message = "올바른 데이터 형식이 아닙니다.";
+        mongoLog("account/doubleCheck", requestIp.getClientIp(req), receive, result);
+
         res.send(result);
     }
 });

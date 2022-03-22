@@ -4,6 +4,7 @@ const redis = require("redis").createClient();
 const VIEWCOUNT = "viewcount";
 const STAR = "star";
 const VOTERLIST = "voteId";
+const HISTORY = "history";
 
 // 특정 웹툰의 조회수 1 증가
 const addViewCount = async (webtoonId) => {
@@ -177,8 +178,32 @@ const getAvgStar = async (webtoonId) => {
     return result;
 }
 
-const addHistory = () => {
+const addHistory = async(webtoonId) => {
+    const result = {
+        success: false,
+        history: []
+    }
 
+    try {
+        await redis.connect();
+
+        const zScoreResult = await redis.zScore(HISTORY, webtoonId);
+        console.log("zScoreResult :", zScoreResult);
+
+        const time = Date.now();//timestamp 이용
+        const zHistoryTime = await redis.zAdd(HISTORY, {score: -time, value: webtoonId});
+        console.log("historyTime :", zHistoryTime);
+        const zHistory = await redis.zRange(HISTORY, 0, 4);
+        console.log("history :", zHistory);
+
+        result.success = true;
+        await redis.disconnect();
+    } catch(err) {
+        console.log(err);
+        await redis.disconnect();
+    }
+
+    return result;
 }
 
 module.exports = {

@@ -51,7 +51,7 @@ router.post("", (req, res) => {
     };
     const result = {
         success: false,
-        message: "웹툰 불러오기 성공",
+        message: "웹툰 불러오기 실패",
         webtoon: [
             // {
             //     webtoonid: 1,
@@ -173,31 +173,40 @@ router.post("", (req, res) => {
                                     result.message = "웹툰 즐겨찾기 오류"; // DB 에러
                                 }).finally(() => {
                                     result.success = true;
+                                    result.message = "웹툰 불러오기 성공";
+                                    mongoLog("webtoon/post", requestIp.getClientIp(req), receive, result);
                                     res.send(result);
                                 })
                             } else {
                                 result.success = true;
+                                result.message = "웹툰 불러오기 성공";
+                                mongoLog("webtoon/post", requestIp.getClientIp(req), receive, result);
                                 res.send(result);
                             }
                         } else {
                             result.message = "웹툰 불러오기 오류"; // DB 에러
                             console.log("\npostgresql err get member info failed\n");
                             console.log(err);
+                            mongoLog("webtoon/post", requestIp.getClientIp(req), receive, result);
                             res.send(result);
                         }
                     }).catch(err => {
                         console.log("\npostgresql err get member info failed");
                         console.log(err);
                         result.message = "웹툰 불러오기 오류"; // DB 에러
+                        mongoLog("webtoon/post", requestIp.getClientIp(req), receive, result);
                         res.send(result);
                     })
                 } else {
+                    result.message = "웹툰 불러오기 성공";
+                    mongoLog("webtoon/post", requestIp.getClientIp(req), receive, result);
                     res.send(result);
                 }
             } else {
                 result.message = "웹툰 필터링 오류"; // DB 에러
                 console.log("\npostgresql err get member info failed\n");
                 console.log(err);
+                mongoLog("webtoon/post", requestIp.getClientIp(req), receive, result);
                 res.send(result);
             }
         }).catch(err => {
@@ -293,7 +302,22 @@ router.get("/preview", (req, res) => {
     });
 })
 
-router.get("/click", (req, res) => {
+router.get("/history", (req, res) => {
+    const result = {
+        success: false,
+        message: "기록 불러오기 실패",
+        webtoon: [
+            // {
+            //     webtoonid: 1,
+            //     title: "쇼미더럭키짱!",
+            //     link: "httplink"
+            // }
+        ]
+    }
+    //gethistory 이후 그 배열로 db참조, 반환
+})
+
+router.post("/click", async(req, res) => {
     const receive = {
         webtoonid: req.body.webtoonID
     }
@@ -303,18 +327,18 @@ router.get("/click", (req, res) => {
     }
 
     try {
-        redis.addViewCount();
-        redis.addHistory();
+        await redis.addViewCount(receive.webtoonid);
+        await redis.addHistory(receive.webtoonid);
         result.success = true;
         result.message = "클릭 기록 성공";
+        //로깅
+        mongoLog("account/click", requestIp.getClientIp(req), receive, result);
+        
+        res.send(result);
     } catch(err) {
         result.message = "클릭 기록 오류";
         console.log(err);
     }
-    //로깅
-    mongoLog("account/click", requestIp.getClientIp(req), receive, result);
-    
-    res.send(result);
 })
 
 module.exports = router;
