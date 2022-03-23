@@ -358,6 +358,10 @@ router.get("/history", async(req, res) => {
             mongoLog("webtoon/history/get", requestIp.getClientIp(req), {}, result);
             res.send(result);
         })
+    } else {
+        result.success = true;
+        result.message = "기록 불러오기 성공";
+        res.send(result);
     }
 })
 
