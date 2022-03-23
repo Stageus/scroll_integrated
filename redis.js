@@ -178,7 +178,37 @@ const getAvgStar = async (webtoonId) => {
     return result;
 }
 
-const addHistory = async(webtoonId) => {
+const addHistory = async(webtoonId, ip) => {
+    const keyHistory = ip + HISTORY;
+    const result = {
+        success: false,
+    }
+
+    try {
+        await redis.connect();
+
+        const zScoreResult = await redis.zScore(keyHistory, webtoonId);
+        console.log("zScoreResult :", zScoreResult);
+
+        const time = Date.now();//timestamp 이용
+        const zHistoryTime = await redis.zAdd(keyHistory, {score: -time, value: webtoonId});
+        console.log("historyTime :", zHistoryTime);
+        const zHistory = await redis.zRange(keyHistory, 0, 4);
+        console.log("history :", zHistory);
+        // console.log(keyHistory);
+
+        result.success = true;
+        await redis.disconnect();
+    } catch(err) {
+        console.log(err);
+        await redis.disconnect();
+    }
+
+    return result;
+}
+
+const getHistory = async(ip) => {
+    const keyHistory = ip + HISTORY;
     const result = {
         success: false,
         history: []
@@ -186,16 +216,10 @@ const addHistory = async(webtoonId) => {
 
     try {
         await redis.connect();
-
-        const zScoreResult = await redis.zScore(HISTORY, webtoonId);
-        console.log("zScoreResult :", zScoreResult);
-
-        const time = Date.now();//timestamp 이용
-        const zHistoryTime = await redis.zAdd(HISTORY, {score: -time, value: webtoonId});
-        console.log("historyTime :", zHistoryTime);
-        const zHistory = await redis.zRange(HISTORY, 0, 4);
-        console.log("history :", zHistory);
-
+        
+        result.history = await redis.zRange(keyHistory, 0, 4);
+        console.log("history :", result.history);
+        
         result.success = true;
         await redis.disconnect();
     } catch(err) {
@@ -212,5 +236,6 @@ module.exports = {
     votersCount,
     addStar,
     getAvgStar,
-    addHistory
+    addHistory,
+    getHistory
 };

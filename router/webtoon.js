@@ -302,7 +302,7 @@ router.get("/preview", (req, res) => {
     });
 })
 
-router.get("/history", (req, res) => {
+router.get("/history", async(req, res) => {
     const result = {
         success: false,
         message: "기록 불러오기 실패",
@@ -315,6 +315,48 @@ router.get("/history", (req, res) => {
         ]
     }
     //gethistory 이후 그 배열로 db참조, 반환
+    let webtoonArr =  await redis.getHistory(requestIp.getClientIp(req))
+    webtoonArr = webtoonArr.history
+    const resultArr = [];
+    // console.log(await webtoonArr);
+    // console.log(await webtoonArr.length);
+    if (await webtoonArr.length > 0) {
+        let sql = "SELECT webtoonid, title, link FROM toon.webtoon WHERE"
+        for (let i = 0; i < await webtoonArr.length; i++) {
+            sql += " webtoonid=$" + (i + 1) + " OR"
+        }
+        sql += " false;"
+        // console.log(sql);
+        // console.log(webtoonArr);
+        await pg(sql, webtoonArr)
+        .then(post => {
+            if (post.success) {
+                // console.log(post.data);
+                for (let resCount = 0; resCount < webtoonArr.length; resCount++) {
+                    for (let sqlCount = 0; sqlCount < post.data.length; sqlCount++) {
+                        if(webtoonArr[resCount] == post.data[sqlCount].webtoonid) {
+                            resultArr[resCount] = post.data[sqlCount]
+                        }
+                    }
+                }
+                // console.log(resultArr);
+                result.success = true;
+                result.message = "기록 불러오기 성공";
+                result.webtoon = resultArr;
+            } else {
+                result.message = "기록 불러오기 오류"; // DB 에러
+                console.log("\npostgresql err get member info failed\n");
+                console.log(err);
+            }
+        }).catch(err => {
+            console.log("\npostgresql err get member info failed");
+            console.log(err);
+            result.message = "기록 불러오기 오류"; // DB 에러
+        }).finally(() => {
+            mongoLog("webtoon/history/get", requestIp.getClientIp(req), {}, result);
+            res.send(result);
+        })
+    }
 })
 
 router.post("/click", async(req, res) => {
@@ -328,11 +370,11 @@ router.post("/click", async(req, res) => {
 
     try {
         await redis.addViewCount(receive.webtoonid);
-        await redis.addHistory(receive.webtoonid);
+        await redis.addHistory(receive.webtoonid, requestIp.getClientIp(req));
         result.success = true;
         result.message = "클릭 기록 성공";
         //로깅
-        mongoLog("account/click", requestIp.getClientIp(req), receive, result);
+        mongoLog("webtoon/click/post", requestIp.getClientIp(req), receive, result);
         
         res.send(result);
     } catch(err) {
