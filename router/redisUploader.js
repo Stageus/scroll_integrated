@@ -46,4 +46,6 @@ const sendStarToDB = async () => {
 
 }
 
-upload();
+
+
+// upload();
