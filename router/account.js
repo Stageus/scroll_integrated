@@ -3,9 +3,9 @@ const express = require("express");
 const router = express.Router();
 // const path = require("path");
 
-const pg = require("../pgRequest");
+const pg = require("../module/pgRequest");
 const requestIp = require("request-ip");
-const mongoLog = require("../logging.js");
+const mongoLog = require("../module/logging");
 const jwt = require("jsonwebtoken");
 
 const jwtKey = require("../private/privateKey").jwtPrivateKey;

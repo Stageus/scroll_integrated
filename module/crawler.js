@@ -4,7 +4,6 @@ const cheerio = require("cheerio");
 const puppeteer = require("puppeteer");
 const fs = require("fs");
 const pg = require("./pgRequest");
-const repeater = require("./repeater");
 const es = require("es7");
 // iconv - charset이 utf-8이 아닌 경우 사용
 
@@ -493,8 +492,4 @@ const renewalData = async () => {
     // await moveDataToElastic(dataWithID);
 }
 
-const mainCrawlerFunc = async () => {
-    repeater(renewalData);
-}
-
-mainCrawlerFunc();
+module.exports = renewalData;

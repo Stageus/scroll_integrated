@@ -1,5 +1,5 @@
 const mongoose = require("mongoose")
-const logDocument = require("./schema/logSchema")
+const logDocument = require("../schema/logSchema")
 
 const mongoLog = (apiValue, ipValue, inputData, outputData) => {
     mongoose.connect("mongodb://root:1234@192.168.160.4", { useNewUrlParser: true })

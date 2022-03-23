@@ -34,8 +34,8 @@ app.use("/webtoon", webtoon);
 const mylibrary = require("./router/myLibrary");
 app.use("/myLibrary", mylibrary);
 
-const redisUpload = require("./router/redisUploader");
-app.use("/redisUpload", redisUpload);
+const schedule = require("./schedule/schedule");
+schedule();
 
 app.listen(port, (req, res) => {
     console.log(port, "번에 서버 실행");

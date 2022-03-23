@@ -1,7 +1,6 @@
 
 const pgClient = require("pg").Client;
-// const pgConfig = require("./private/pgConfig");
-const pgConfig = require("./private/testConfig"); // 테스트용
+const pgConfig = require("../private/pgConfig");
 
 const pgRequest = async (sql, values=null) => {
     console.log("pgRequest Start");
