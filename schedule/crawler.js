@@ -7,7 +7,7 @@ const pg = require("./pgRequest");
 const es = require("es7");
 // iconv - charset이 utf-8이 아닌 경우 사용
 
-const FILEPATH = "thumbnail/";
+const FILEPATH = "../../data/thumbnail/";
 
 // const pg = require("pgRequest");
 
@@ -93,7 +93,7 @@ const crawling2 = async (url) => {
 }
 
 const naverCrawling = async () => {
-    const week = ["sun", "mon", "the", "wed", "thu", "fri", "sat", "dailyplus"]; // mon, tue, wed, thu, fri, sat, sun, dailyplus
+    const week = ["sun", "mon", "tue", "wed", "thu", "fri", "sat", "dailyplus"]; // mon, tue, wed, thu, fri, sat, sun, dailyplus
     const webtoonDataList = [];
     const platform = PLATFORMID.NAVER;
 
@@ -114,7 +114,6 @@ const naverCrawling = async () => {
         for (let index2 = 1; index2 <= weekday(NAVER_WEBTOONLIST).children().length; index2++) {
             const link = NAVER + weekday(NAVER_LINK(index2)).attr('href');
             const thumbnail = weekday(NAVER_THUMBNAIL(index2)).attr("src");
-            const webtoonID = /titleId=(\d+)/g.exec(link)[1];
 
             const webtoonHtml = await crawling(link);
             const webtoon = cheerio.load(webtoonHtml.data);
@@ -127,7 +126,6 @@ const naverCrawling = async () => {
             // console.log(genreString);
 
             webtoonDataList.push({
-                webtoonID: webtoonID,
                 link: link,
                 title: title,
                 thumbnail: title + ".jpg",
@@ -387,19 +385,19 @@ const saveToDB = async (webtoonDataList) => {
 
     // webtoon 테이블에 추가
     for (let index = 0; index < webtoonDataList.length; index++) {
-        for(let index2 = 0; index2 < webtoonDataList[index].genre; index2++) {
+        for (let index2 = 0; index2 < webtoonDataList[index].genre; index2++) {
             valuesList4genre.push([webtoonDataList[index][index2]]);
         }
         // webtoon 테이블에 genre 추가
-        // const genreText = webtoonDataList[index].genre.join(', ');
+        const genreText = webtoonDataList[index].genre.join(', ');
 
         sqlList.push(
             "INSERT TO toon.webtoon" + 
-            " (title, thumbnail, link, platformID, viewCount, author)" + 
-            " VALUES ($1, $2, $3, $4, $5, $6)" + 
+            " (title, thumbnail, link, platformID, viewCount, author, genre)" + 
+            " VALUES ($1, $2, $3, $4, $5, $6, $7)" + 
             " ON CONFLICT (title, platformID)" + 
             " DO UPDATE" + 
-            " SET title=$1, thumbnail=$2, link=$3, platformID=$4, viewCount=$5, author=$6;"
+            " SET title=$1, thumbnail=$2, link=$3, platformID=$4, viewCount=$5, author=$6, genre=$7;"
         );
         values.push([
             webtoonDataList[index].title,
@@ -407,7 +405,8 @@ const saveToDB = async (webtoonDataList) => {
             webtoonDataList[index].link,
             webtoonDataList[index].platform,
             viewCount,
-            webtoonDataList[index].author
+            webtoonDataList[index].author,
+            genreText
         ]);
     }
 
@@ -429,35 +428,14 @@ const saveToDB = async (webtoonDataList) => {
         console.log(err);
     }
 
-    const data = [ // cycle 테이블에 저장할 때 쓰임
-        // {
-        //     webtoonID: something
-        //     webtoonData: something
-        // }
-    ];
-
     // cycle 테이블에 추가
-    for (let index = 0; index < webtoonDataList.length; index++) {
-        const sql4webtoonID = "SELECET webtoonID FROM webtoon WHERE title=$1 and platform=$2;"
-        const values4webtoonID = [webtoonDataList[index].title, webtoonDataList[index].platform];
-        try {
-            data.push({
-                webtoonID: await pg(sql4webtoonID, values4webtoonID).data[0],
-                webtoonData: webtoonDataList[index]
-            })
-        }
-        catch(err) {
-            console.log(err);
-        }
-    }
-
     const sqlList2 = [];
     const valuesList2 = [];
-    for (let index = 0; index < data.length; index++) {
+    for (let index = 0; index < webtoonDataList.length; index++) {
         sqlList2.push(
-            "INSERT INTO toon.cycle (webtoonID, cycle) VALUES ($1, $2);"
+            "INSERT INTO toon.cycle (platformID, title, cycle) VALUES ($1, $2, $3);"
         );
-        valuesList2.push([data[index].webtoonID, data[index].webtoonData.cycle]);
+        valuesList2.push([webtoonDataList[index].platform, webtoonDataList[index].title, webtoonDataList[index].cycle]);
     }
 
     try {
@@ -466,8 +444,6 @@ const saveToDB = async (webtoonDataList) => {
     catch(err) {
         console.log(err);
     }
-
-    return data;
 }
 
 const dbCleaner = async () => {
@@ -545,8 +521,8 @@ const bringWebtoonData = async () => {
 const renewalData = async () => {
     await dbCleaner();
     const allWebtoonDataList = await bringWebtoonData();
-    const dataWithID = await saveToDB(allWebtoonDataList);
+    await saveToDB(allWebtoonDataList);
     // await moveDataToElastic(dataWithID);
 }
 
-// module.exports = renewalData;
+module.exports = renewalData;

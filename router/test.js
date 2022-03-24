@@ -9,9 +9,9 @@ const INDEX = "test";
 const es = require("es7");
 
 const redisClient = require("redis").createClient();
-const redis = require("../redis");
+const redis = require("../module/redis");
 
-const mongoLog = require("../logging");
+const mongoLog = require("../module/redis");
 
 router.get("/redis/getAllViewCount", async (req, res) => {
     const result = {

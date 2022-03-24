@@ -3,9 +3,9 @@ const express = require("express");
 const router = express.Router();
 // const path = require("path");
 
-const pg = require("../pgRequest");
+const pg = require("../module/pgRequest");
 const requestIp = require("request-ip");
-const mongoLog = require("../logging");
+const mongoLog = require("../module/logging");
 const es = require("es7");
 const jwt = require("jsonwebtoken");
 
@@ -13,7 +13,7 @@ const jwtKey = require("../private/privateKey").jwtPrivateKey;
 const WEBTOON = "webtoon";
 const LIBRARY = "library";
 
-const redis = require("../redis.js");
+const redis = require("../module/redis");
 
 const changeReq = (req) => {
     if (req === "일") {
@@ -65,6 +65,8 @@ router.post("", (req, res) => {
     };
     let webtoonArr = [];
     let bookmarkArr = [];
+
+    // console.log(receive);
 
     let sql = `SELECT w.webtoonid
     FROM toon.webtoon AS w
@@ -356,6 +358,10 @@ router.get("/history", async(req, res) => {
             mongoLog("webtoon/history/get", requestIp.getClientIp(req), {}, result);
             res.send(result);
         })
+    } else {
+        result.success = true;
+        result.message = "기록 불러오기 성공";
+        res.send(result);
     }
 })
 
