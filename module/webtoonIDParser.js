@@ -14,3 +14,8 @@ const maker = (platformID, title) => {
 
     return result;
 }
+
+module.exports = {
+    parser,
+    maker
+}

@@ -2,10 +2,9 @@
 const pg = require("./pgRequest");
 const redis = require("redis").createClient();
 
-
 const VIEWCOUNT = "viewcount";
-const STAR = "star";
-const VOTERLIST = "voteId";
+// const STAR = "star";
+// const VOTERLIST = "voteId";
 
 const uploadRedis = async () => {
 
@@ -19,7 +18,7 @@ const uploadRedis = async () => {
     }
     const webtoonIdList = webtoonData.data;
 
-    // redis의 조회수, 총 별점, 투표자 리스트 DB에 저장
+    // redis의 조회수 DB에 저장
     try {
         await redis.connect();
         for (let index = 0; index < webtoonIdList.length; index++) {

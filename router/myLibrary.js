@@ -49,12 +49,14 @@ router.get("", (req, res) => {
     }
 
     if (auth) {
+        const memberID = jwtData.memberID;
+
         const esClient = new es.Client({
             node: "https://localhost:9200/" // 수정해야함.
         });
 
         esClient.search({
-            index: jwtData.memberID + INDEX,
+            index: LIBRARY,
             body: {
                 query: {}
             }
@@ -121,7 +123,7 @@ router.post("", async (req, res) => {
 
     //     try {
     //         await esClient.index({
-    //             index: jwtData.memberid + INDEX,
+    //             index: LIBRARY,
     //             body: {
     //                 webtoonID: receive.webtoonID
     //             }
@@ -182,7 +184,7 @@ router.delete("", async(req, res) => {
         // });
 
         // esClient.deleteByQuery({
-        //     index: INDEX,
+        //     index: LIBRARY,
         //     body:{
 
         //     }

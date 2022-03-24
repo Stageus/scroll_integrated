@@ -6,6 +6,7 @@ const fs = require("fs");
 const pg = require("./pgRequest");
 const es = require("es7");
 // iconv - charset이 utf-8이 아닌 경우 사용
+const translater = require("../module/webtoonIDParser");
 
 const FILEPATH = "../../data/thumbnail/";
 
@@ -95,7 +96,7 @@ const crawling2 = async (url) => {
 const naverCrawling = async () => {
     const week = ["sun", "mon", "tue", "wed", "thu", "fri", "sat", "dailyplus"]; // mon, tue, wed, thu, fri, sat, sun, dailyplus
     const webtoonDataList = [];
-    const platform = PLATFORMID.NAVER;
+    const platformID = PLATFORMID.NAVER;
 
     for (let index = 0; index < week.length; index++) {
         let cycle = null;
@@ -131,7 +132,7 @@ const naverCrawling = async () => {
                 thumbnail: title + ".jpg",
                 author: author,
                 genre: genre,
-                platform: platform,
+                platformID: platformID,
                 cycle: cycle
             })
             
@@ -143,7 +144,7 @@ const naverCrawling = async () => {
             //     thumbnail: title + ".jpg",
             //     author: author,
             //     genre: genre,
-            //     platform: platform,
+            //     platformID: platformID,
             //     cycle: cycle
             // })
         }
@@ -155,7 +156,7 @@ const naverCrawling = async () => {
 const lezhinCrawling = async () => {
     const week = [0, 1, 2, 3, 4, 5, 6, "n"];
     const webtoonDataList = [];
-    const platform = PLATFORMID.LEZHIN;
+    const platformID = PLATFORMID.LEZHIN;
 
     const weekdayListHtml = await crawling2(LEZHIN + LEZHIN_WEEKDAYLIST + 0);
     const weekday = cheerio.load(weekdayListHtml);
@@ -206,7 +207,7 @@ const lezhinCrawling = async () => {
                 thumbnail: title + ".jpg",
                 author: author,
                 genre: genre,
-                platform: platform,
+                platformID: platformID,
                 cycle: cycle
             })
 
@@ -218,7 +219,7 @@ const lezhinCrawling = async () => {
             //     thumbnail: title + ".jpg",
             //     author: author,
             //     genre: genre,
-            //     platform: platform,
+            //     platformID: platformID,
             //     cycle: cycle
             // })
         }
@@ -231,7 +232,7 @@ const lezhinCrawling = async () => {
 const toomicsCrawling = async () => {
     const week = [1, 2, 3, 4, 5, 6, 7];
     const webtoonDataList = [];
-    const platform = PLATFORMID.TOOMICS;
+    const platformID = PLATFORMID.TOOMICS;
 
     for (let index = 0; index < week.length; index++) {
         let cycle = null;
@@ -270,7 +271,7 @@ const toomicsCrawling = async () => {
                 thumbnail: title + ".jpg",
                 author: author,
                 genre: genre,
-                platform: platform,
+                platformID: platformID,
                 cycle: cycle
             })
 
@@ -282,7 +283,7 @@ const toomicsCrawling = async () => {
             //     thumbnail: title + ".jpg",
             //     author: author,
             //     genre: genre,
-            //     platform: platform,
+            //     platformID: platformID,
             //     cycle: cycle
             // })
         }
@@ -294,7 +295,7 @@ const toomicsCrawling = async () => {
 const toptoonCrawling = async () => {
     const week = [1, 2, 3, 4, 5, 6, 7, 8];
     const webtoonDataList = [];
-    const platform = PLATFORMID.TOPTOON;
+    const platformID = PLATFORMID.TOPTOON;
 
     const weekdayListHtml = await crawling2(TOPTOON + TOPTOON_WEEKDAYLIST + 1);
     const weekday = cheerio.load(weekdayListHtml);
@@ -339,7 +340,7 @@ const toptoonCrawling = async () => {
                 thumbnail: title + ".jpg",
                 author: author,
                 genre: genre,
-                platform: platform,
+                platformID: platformID,
                 cycle: cycle
             })
 
@@ -351,7 +352,7 @@ const toptoonCrawling = async () => {
             //     thumbnail: title + ".jpg",
             //     author: author,
             //     genre: genre,
-            //     platform: platform,
+            //     platformID: platformID,
             //     cycle: cycle
             // });
         }
@@ -380,6 +381,8 @@ const saveToDB = async (webtoonDataList) => {
     const viewCount = 0
     const sqlList = [];
     const valuesList = [];
+    const sqlList4ID = [];
+    const valuesList4ID = [];
     const sqlList4genre = [];
     const valuesList4genre = [];
 
@@ -403,11 +406,23 @@ const saveToDB = async (webtoonDataList) => {
             webtoonDataList[index].title,
             webtoonDataList[index].thumbnail,
             webtoonDataList[index].link,
-            webtoonDataList[index].platform,
+            webtoonDataList[index].platformID,
             viewCount,
             webtoonDataList[index].author,
             genreText
         ]);
+
+        sqlList4ID.push(
+            "INSERT TO toon.webtoonID" +
+            " (title, platformID)" +
+            " VALUES ($1, $2)" +
+            " ON CONFLICT (title, platformID)" +
+            " DO NOTHING;"
+        );
+        valuesList4ID.push([
+            webtoonDataList[index].title,
+            webtoonDataList[index].platformID
+        ])
     }
 
     for (let index = 0; index < valuesList4genre.length; index++) {
@@ -422,6 +437,7 @@ const saveToDB = async (webtoonDataList) => {
 
     try {
         await pg(sqlList, valuesList);
+        await pg(sqlList4ID, valuesList4ID);
         await pg(sqlList4genre, valuesList4genre);
     }
     catch(err) {
@@ -435,7 +451,7 @@ const saveToDB = async (webtoonDataList) => {
         sqlList2.push(
             "INSERT INTO toon.cycle (platformID, title, cycle) VALUES ($1, $2, $3);"
         );
-        valuesList2.push([webtoonDataList[index].platform, webtoonDataList[index].title, webtoonDataList[index].cycle]);
+        valuesList2.push([webtoonDataList[index].platformID, webtoonDataList[index].title, webtoonDataList[index].cycle]);
     }
 
     try {
@@ -465,28 +481,29 @@ const moveDataToElastic = async (webtoonDataList) => {
         });
 
         for (let idx = 0; idx < webtoonDataList.length; idx++) {
-            const id = webtoonDataList[idx].webtoonID;
-            const title = webtoonDataList[idx].webtoonData.title;
-            const genre = webtoonDataList[idx].webtoonData.genre;
-            const week = webtoonDataList[idx].webtoonData.cycle
-            let platform = null;
-            switch(webtoonDataList[idx].webtoonData.platform) {
+            const title = webtoonDataList[idx].title;
+            const platformID = webtoonDataList[idx].platformID;
+            let platformName = null;
+            switch(platformID) {
                 case PLATFORMID.NAVER:
-                    platform = "naver";
+                    platformName = "naver";
                     break;
                 case PLATFORMID.LEZHIN:
-                    platform = "lezhin";
+                    platformName = "lezhin";
                     break;
                 case PLATFORMID.TOOMICS:
-                    platform = "toomics";
+                    platformName = "toomics";
                     break;
                 case PLATFORMID.TOPTOON:
-                    platform = "toptoon";
+                    platformName = "toptoon";
                     break;
             }
-            const thumbnail = webtoonDataList[idx].webtoonData.thumbnail;
-            const link = webtoonDataList[idx].webtoonData.link;
-            const author = webtoonDataList[idx].webtoonData.author;
+            const id = translater.maker(platformID, title);
+            const genre = webtoonDataList[idx].genre;
+            const week = webtoonDataList[idx].cycle
+            const thumbnail = webtoonDataList[idx].thumbnail;
+            const link = webtoonDataList[idx].link;
+            const author = webtoonDataList[idx].author;
 
             await esClient.index({
                 index: "webtoon",
@@ -495,7 +512,7 @@ const moveDataToElastic = async (webtoonDataList) => {
                     title: title,
                     genre: genre,
                     week: week,
-                    platform: platform,
+                    platform: platformName,
                     thumbnail: thumbnail,
                     link: link,
                     author: author
