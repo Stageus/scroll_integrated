@@ -3,7 +3,7 @@ const axios = require("axios");
 const cheerio = require("cheerio");
 const puppeteer = require("puppeteer");
 const fs = require("fs");
-const pg = require("../module/pgRequest");
+const pg = require("./pgRequest");
 const es = require("es7");
 // iconv - charset이 utf-8이 아닌 경우 사용
 const translater = require("../module/webtoonIDParser");
@@ -379,83 +379,116 @@ const downloadImg = async (url, title, platform) => {
 const saveToDB = async (webtoonDataList) => {
     // 조회수 가져오기
     const viewCount = 0
-    const sqlList = [];
-    const valuesList = [];
-    const sqlList4ID = [];
-    const valuesList4ID = [];
-    const sqlList4genre = [];
-    const valuesList4genre = [];
+    let sql = "INSERT TO toon.webtoon" + 
+            " (title, thumbnail, link, platformID, viewCount, author)" + 
+            " VALUES";
+    const values = [];
+
+    let sql4ID = "INSERT TO toon.webtoonID" + 
+                " (title, platformID)" + 
+                " VALUES";
+    const values4ID = [];
+
+    let sql4genre =  "INSERT TO toon.genre" + 
+                    " (genreName)" + 
+                    " VALUES";
+    const values4genre = [];
+
+    let dollarNumber4genre = 1;
 
     // webtoon 테이블에 추가
     for (let index = 0; index < webtoonDataList.length; index++) {
         for (let index2 = 0; index2 < webtoonDataList[index].genre; index2++) {
-            valuesList4genre.push([webtoonDataList[index][index2]]);
+            if (index == 0 && index2 == 0) {
+                sql4genre += " ";
+            }
+            else {
+                sql4genre += ", ";
+            }
+
+            sql4genre += "($" + dollarNumber4genre + ")";
+            dollarNumber4genre++;
+            values4genre.push(webtoonDataList[index].genre[index2]);
         }
-        // webtoon 테이블에 genre 추가
-        const genreText = webtoonDataList[index].genre.join(', ');
 
-        sqlList.push(
-            "INSERT TO toon.webtoon" + 
-            " (title, thumbnail, link, platformID, viewCount, author, genre)" + 
-            " VALUES ($1, $2, $3, $4, $5, $6, $7)" + 
-            " ON CONFLICT (title, platformID)" + 
-            " DO UPDATE" + 
-            " SET title=$1, thumbnail=$2, link=$3, platformID=$4, viewCount=$5, author=$6, genre=$7;"
-        );
-        values.push([
-            webtoonDataList[index].title,
-            webtoonDataList[index].thumbnail,
-            webtoonDataList[index].link,
-            webtoonDataList[index].platformID,
-            viewCount,
-            webtoonDataList[index].author,
-            genreText
-        ]);
+        if (index == 0) {
+            sql += " ";
+            sql4ID += " ";
+        }
+        else {
+            sql += ", ";
+            sql4ID += ", ";
+        }
 
-        sqlList4ID.push(
-            "INSERT TO toon.webtoonID" +
-            " (title, platformID)" +
-            " VALUES ($1, $2)" +
-            " ON CONFLICT (title, platformID)" +
-            " DO NOTHING;"
-        );
-        valuesList4ID.push([
-            webtoonDataList[index].title,
-            webtoonDataList[index].platformID
-        ])
+        sql += "($" + (6*index + 1) +
+                ", $" + (6*index + 2) + 
+                ", $" + (6*index + 3) + 
+                ", $" + (6*index + 4) + 
+                ", $" + (6*index + 5) + 
+                ", $" + (6*index + 6) +  ")";
+        values.push(webtoonDataList[index].title);
+        values.push(webtoonDataList[index].thumbnail);
+        values.push(webtoonDataList[index].link);
+        values.push(webtoonDataList[index].platformID);
+        values.push(webtoonDataList[index].viewCount);
+        values.push(webtoonDataList[index].author);
+
+             
+        sql4ID = "($" + (2*index + 1) +
+                ", $" + (2*index + 2) + ")"
+        values4ID.push(webtoonDataList[index].title);
+        values4ID.push(webtoonDataList[index].platformID);
     }
 
-    for (let index = 0; index < valuesList4genre.length; index++) {
-        sqlList4genre.push(
-            "INSERT TO toon.genre" + 
-            " (genreName)" + 
-            " VALUES ($1)" + 
-            " ON CONFLICT (genreName)" + 
-            " DO NOTHING;"
-        );
-    }
+    sql += " ON CONFLICT (title, platformID) DO NOTHING;";
+    sql4genre += " ON CONFLICT (genreName) DO NOTHING;";
+    sql4ID += " ON CONFLICT (title, platformID) DO NOTHING;";
 
     try {
-        await pg(sqlList, valuesList);
-        await pg(sqlList4ID, valuesList4ID);
-        await pg(sqlList4genre, valuesList4genre);
+        await pg(sql4ID, values4ID);
+        await pg(sql, values);
+        await pg(sql4genre, values4genre);
     }
     catch(err) {
         console.log(err);
     }
 
     // cycle 테이블에 추가
-    const sqlList2 = [];
-    const valuesList2 = [];
+    const sqlList4cycle = [];
+    const valuesList4cycle = [];
+    const sqlList4toongenre = [];
+    const valuesList4toongenre = [];
     for (let index = 0; index < webtoonDataList.length; index++) {
-        sqlList2.push(
-            "INSERT INTO toon.cycle (platformID, title, cycle) VALUES ($1, $2, $3);"
+        sqlList4cycle.push(
+            "INSERT INTO toon.cycle (webtoonID, cycle)" + 
+            " SELECT webtoonID, cycle" + 
+            " FROM (SELECT $1 AS title, $2 AS platformID, $3 AS cycle) AS a" + 
+            " JOIN toon.webtoonID AS b" + 
+            " ON a.title=b.title and a.platform=b.platformID" +
+            " ON CONFLICT (webtoonID, cycle) DO NOTHING;"
         );
-        valuesList2.push([webtoonDataList[index].platformID, webtoonDataList[index].title, webtoonDataList[index].cycle]);
+        values4cycle.push([webtoonDataList[index].title, webtoonDataList[index].platformID, webtoonDataList[index].cycle]);
+
+        for (let index2 = 0; index2 < webtoonDataList[index2]; index2++) {
+            sqlList4toongenre.push(
+                "INSERT INTO toon.toongenre (webtoonID, genreID)" +
+                " SELECT webtoonID, genreID" +
+                " FROM (SELECT $1 AS title, $2 AS platformID, $3 AS genreName) AS a" +
+                " JOIN toon.webtoonID AS b" +
+                " ON a.title=b.title and a.platformID = b.platformID" +
+                " JOIN toon.genre AS c" +
+                " ON a.genreName=c.genreName" +
+                " ON CONFLICT (webtoonID, genreID) DO NOTHING;"
+            )
+            valuesList4toongenre.push(
+                [webtoonDataList[index].title, webtoonDataList[index].platformID, webtoonDataList[index].genre[index2]]
+            );
+        }
     }
 
     try {
-        await pg(sqlList2, valuesList2);
+        await pg(sqlList4cycle, valuesList4cycle);
+        await pg(sqlList4toongenre, valuesList4toongenre);
     }
     catch(err) {
         console.log(err);
