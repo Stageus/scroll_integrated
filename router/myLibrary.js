@@ -10,7 +10,6 @@ const es = require("es7");
 
 const jwt = require("jsonwebtoken");
 const jwtKey = require("../private/privateKey").jwtPrivateKey;
-const idParser = require("../module/webtoonIDParser");
 
 const LIBRARY = "library";
 
@@ -109,12 +108,9 @@ router.post("", async (req, res) => {
     //         node: "https://localhost:9200/" // 수정해야함.
     //     });
 
-        const sql = `INSERT INTO toon.library (webtoonid, memberid)
-        SELECT webtoonid, $1 FROM toon.webtoon
-        WHERE platformid=$2 AND title=$3;`;
-        const idList = idParser.parser(receive.webtoonID);
-        const values = [jwtData.memberid, idList.platformID, idList.title];
-        // console.log(jwtData)
+        const sql = "INSERT INTO toon.library (webtoonID, memberID) VALUES ($1, $2)";
+        const values = [receive.webtoonID, jwtData.memberid];
+        console.log(jwtData)
 
         try {
             await pg(sql, values);
@@ -171,12 +167,8 @@ router.delete("", async(req, res) => {
     }
 
     if (auth) {
-        const sql = `DELETE FROM toon.library l
-        USING toon.webtoon w
-        WHERE l.webtoonid = w.webtoonid
-        AND l.memberid=$1 AND w.platformid=$2 AND w.title=$3;`;
-        const idList = idParser.parser(receive.webtoonID);
-        const values = [jwtData.memberid, idList.platformID, idList.title];
+        const sql = "DELETE FROM toon.library WHERE webtoonid=$1 and memberid=$2";
+        const values = [receive.webtoonID, jwtData.memberid];
 
         try {
             await pg(sql, values);
