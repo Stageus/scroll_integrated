@@ -37,6 +37,9 @@ app.use("/myLibrary", mylibrary);
 const schedule = require("./schedule/schedule");
 schedule();
 
+const crawler = require("./schedule/crawler");
+
 app.listen(port, (req, res) => {
     console.log(port, "번에 서버 실행");
+    crawler();
 });

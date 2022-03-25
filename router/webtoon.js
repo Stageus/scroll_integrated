@@ -372,6 +372,7 @@ router.get("/history", async(req, res) => {
             res.send(result);
         })
     } else {
+        mongoLog("webtoon/history/get", requestIp.getClientIp(req), {}, result);
         result.success = true;
         result.message = "기록 불러오기 성공";
         res.send(result);

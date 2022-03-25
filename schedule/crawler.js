@@ -3,12 +3,13 @@ const axios = require("axios");
 const cheerio = require("cheerio");
 const puppeteer = require("puppeteer");
 const fs = require("fs");
-const pg = require("./pgRequest");
+const pg = require("../module/pgRequest");
 const es = require("es7");
 // iconv - charset이 utf-8이 아닌 경우 사용
 const translater = require("../module/webtoonIDParser");
 
-const FILEPATH = "../../data/thumbnail/";
+// const FILEPATH = "../../data/thumbnail/";
+const FILEPATH = "./thumbnail/";
 
 // const pg = require("pgRequest");
 
@@ -81,14 +82,21 @@ const crawling = async (url) => {
 };
 
 const crawling2 = async (url) => {
-    const browser = await puppeteer.launch();
-
-    const page = await browser.newPage();
-
-    await page.goto(url);
-
-    let content = await page.content();
-    await browser.close();
+    let content = null;
+    try {
+        const browser = await puppeteer.launch();
+    
+        const page = await browser.newPage();
+    
+        await page.goto(url);
+    
+        content = await page.content();
+        await browser.close();
+    }
+    catch(err) {
+        console.log("\ncrawling2 에러");
+        console.log(err);
+    }
 
     return content;
 }
@@ -129,7 +137,7 @@ const naverCrawling = async () => {
             webtoonDataList.push({
                 link: link,
                 title: title,
-                thumbnail: title + ".jpg",
+                thumbnail: platformID + "_" + title + ".jpg",
                 author: author,
                 genre: genre,
                 platformID: platformID,
@@ -141,7 +149,7 @@ const naverCrawling = async () => {
             // console.log("data :", {
             //     link: link,
             //     title: title,
-            //     thumbnail: title + ".jpg",
+            //     thumbnail: platformID + "_" + title + ".jpg",
             //     author: author,
             //     genre: genre,
             //     platformID: platformID,
@@ -204,7 +212,7 @@ const lezhinCrawling = async () => {
             webtoonDataList.push({
                 link: link,
                 title: title,
-                thumbnail: title + ".jpg",
+                thumbnail: platformID + "_" + title + ".jpg",
                 author: author,
                 genre: genre,
                 platformID: platformID,
@@ -216,7 +224,7 @@ const lezhinCrawling = async () => {
             // console.log("data :", {
             //     link: link,
             //     title: title,
-            //     thumbnail: title + ".jpg",
+            //     thumbnail: platformID + "_" + title + ".jpg",
             //     author: author,
             //     genre: genre,
             //     platformID: platformID,
@@ -268,7 +276,7 @@ const toomicsCrawling = async () => {
             webtoonDataList.push({
                 link: link,
                 title: title,
-                thumbnail: title + ".jpg",
+                thumbnail: platformID + "_" + title + ".jpg",
                 author: author,
                 genre: genre,
                 platformID: platformID,
@@ -280,7 +288,7 @@ const toomicsCrawling = async () => {
             // console.log("data :", {
             //     link: link,
             //     title: title,
-            //     thumbnail: title + ".jpg",
+            //     thumbnail: platformID + "_" + title + ".jpg",
             //     author: author,
             //     genre: genre,
             //     platformID: platformID,
@@ -337,14 +345,14 @@ const toptoonCrawling = async () => {
             webtoonDataList.push({
                 link: link,
                 title: title,
-                thumbnail: title + ".jpg",
+                thumbnail: platformID + "_" + title + ".jpg",
                 author: author,
                 genre: genre,
                 platformID: platformID,
                 cycle: cycle
             })
 
-            downloadImg(thumbnail, title, "tooptoon");
+            downloadImg(thumbnail, title, "toptoon");
 
             // console.log("data :", {
             //     link: link,
@@ -361,7 +369,7 @@ const toptoonCrawling = async () => {
     return webtoonDataList;
 }
 
-const downloadImg = async (url, title, platform) => {
+const downloadImg = async (url, title, platformID) => {
     fs.readdir('thumbnail', (err) => {
         if(err){
             console.error("thumbnail 폴더가 없어 thumbnail 폴더를 생성합니다 ")
@@ -373,7 +381,7 @@ const downloadImg = async (url, title, platform) => {
         responseType: 'arraybuffer'
     });
 
-    fs.writeFileSync(FILEPATH + platform + "_" + title + '.jpg', img.data);
+    fs.writeFileSync(FILEPATH + platformID + "_" + title + '.jpg', img.data);
 }
 
 const saveToDB = async (webtoonDataList) => {
