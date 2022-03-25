@@ -3,7 +3,7 @@ const axios = require("axios");
 const cheerio = require("cheerio");
 const puppeteer = require("puppeteer");
 const fs = require("fs");
-const pg = require("./pgRequest");
+const pg = require("../module/pgRequest");
 const es = require("es7");
 // iconv - charset이 utf-8이 아닌 경우 사용
 const translater = require("../module/webtoonIDParser");

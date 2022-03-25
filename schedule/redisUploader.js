@@ -1,5 +1,5 @@
 
-const pg = require("./pgRequest");
+const pg = require("../module/pgRequest");
 const redis = require("redis").createClient();
 
 const VIEWCOUNT = "viewcount";

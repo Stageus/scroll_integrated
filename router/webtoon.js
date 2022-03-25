@@ -14,6 +14,7 @@ const WEBTOON = "webtoon";
 const LIBRARY = "library";
 
 const redis = require("../module/redis");
+const idParser = require("../module/webtoonIDParser");
 
 const changeReq = (req) => {
     if (req === "일") {
@@ -68,7 +69,7 @@ router.post("", (req, res) => {
 
     // console.log(receive);
 
-    let sql = `SELECT w.webtoonid
+    let sql = `SELECT w.platformid, w.title
     FROM toon.webtoon AS w
     JOIN toon.toongenre AS t
     ON w.webtoonid = t.webtoonid
@@ -103,8 +104,8 @@ router.post("", (req, res) => {
         }
         sql += ";";
         if (receive.platform.length === 0 && receive.genre.length === 0 && receive.weekday.length === 0) {
-            console.log("@@@@")
-            sql = "SELECT webtoonid FROM toon.webtoon;"
+            // console.log("@@@@")
+            sql = "SELECT platformid, title FROM toon.webtoon;"
         }
         // console.log(sql);
         // 웹툰 필터링
@@ -115,21 +116,23 @@ router.post("", (req, res) => {
                 webtoonArr = post.data;
                 //배열 중복제거
                 for (let i = 0; i < webtoonArr.length; i++) {
-                    webtoonArr[i] = webtoonArr[i].webtoonid;
+                    webtoonArr[i] = idParser.maker(webtoonArr[i].platformid, webtoonArr[i].title);
                 }
                 webtoonArr = webtoonArr.filter((element, index) => webtoonArr.indexOf(element) === index);
                 // console.log(webtoonArr);
                 // 웹툰 불러오기
                 if (webtoonArr.length > 0) {
-                    let sql = `SELECT webtoonid, title, thumbnail, link, author
+                    let sql = `SELECT webtoonid, platformid, title, thumbnail, link, author
                     FROM toon.webtoon WHERE`;
                     for (let i = 0; i < webtoonArr.length; i++) {
-                        sql += " webtoonid=$" + (i + 1) + " OR"
+                        const idList = idParser.parser(webtoonArr[i]);
+                        // console.log(idList);
+                        sql += " (platformid=" + idList.platformID + " AND"
+                        sql += " title='" + idList.title + "') OR"
                     }
                     sql += " false ORDER BY viewcount DESC;";
-                    let values = webtoonArr;
                     // console.log(sql);
-                    pg(sql, values)
+                    pg(sql, [])
                     .then(post => {
                         if (post.success) {
                             // console.log(post.data);
@@ -145,6 +148,7 @@ router.post("", (req, res) => {
                                 // 토큰 인증 실패
                                 for (let i = 0; i < result.webtoon.length; i++) {
                                     result.webtoon[i].bookmark = false;
+                                    result.webtoon[i].webtoonid = idParser.maker(result.webtoon[i].platformid, result.webtoon[i].title);
                                 }
                             }
                             // 북마크 유무
@@ -163,6 +167,7 @@ router.post("", (req, res) => {
                                             if (bookmarkArr.includes(result.webtoon[i].webtoonid)) {
                                                 result.webtoon[i].bookmark = true;
                                             }
+                                            result.webtoon[i].webtoonid = idParser.maker(result.webtoon[i].platformid, result.webtoon[i].title);
                                         }
                                     } else {
                                         result.message = "웹툰 즐겨찾기 오류"; // DB 에러
@@ -323,17 +328,22 @@ router.get("/history", async(req, res) => {
     // console.log(await webtoonArr);
     // console.log(await webtoonArr.length);
     if (await webtoonArr.length > 0) {
-        let sql = "SELECT webtoonid, title, link FROM toon.webtoon WHERE"
+        let sql = "SELECT platformid, title, link FROM toon.webtoon WHERE"
         for (let i = 0; i < await webtoonArr.length; i++) {
-            sql += " webtoonid=$" + (i + 1) + " OR"
+            const idList = idParser.parser(webtoonArr[i]);
+            sql += " (platformid=" + idList.platformID + " AND"
+            sql += " title='" + idList.title + "') OR"
         }
         sql += " false;"
         // console.log(sql);
         // console.log(webtoonArr);
-        await pg(sql, webtoonArr)
+        await pg(sql, [])
         .then(post => {
             if (post.success) {
                 // console.log(post.data);
+                for (let i = 0; i < post.data.length; i++) {
+                    post.data[i].webtoonid = idParser.maker(post.data[i].platformid, post.data[i].title);
+                }
                 for (let resCount = 0; resCount < webtoonArr.length; resCount++) {
                     for (let sqlCount = 0; sqlCount < post.data.length; sqlCount++) {
                         if(webtoonArr[resCount] == post.data[sqlCount].webtoonid) {
