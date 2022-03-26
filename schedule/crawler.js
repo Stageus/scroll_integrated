@@ -137,7 +137,7 @@ const naverCrawling = async () => {
                 cycle: cycle
             })
             
-            downloadImg(thumbnail, title, "naver");
+            downloadImg(thumbnail, title);
 
             // console.log("data :", {
             //     link: link,
@@ -212,7 +212,7 @@ const lezhinCrawling = async () => {
                 cycle: cycle
             })
 
-            downloadImg(thumbnail, title, "lezhin");
+            downloadImg(thumbnail, title);
 
             // console.log("data :", {
             //     link: link,
@@ -276,7 +276,7 @@ const toomicsCrawling = async () => {
                 cycle: cycle
             })
 
-            downloadImg(thumbnail, title, "toomics");
+            downloadImg(thumbnail, title);
 
             // console.log("data :", {
             //     link: link,
@@ -345,7 +345,7 @@ const toptoonCrawling = async () => {
                 cycle: cycle
             })
 
-            downloadImg(thumbnail, title, "tooptoon");
+            downloadImg(thumbnail, title);
 
             // console.log("data :", {
             //     link: link,
@@ -362,7 +362,7 @@ const toptoonCrawling = async () => {
     return webtoonDataList;
 }
 
-const downloadImg = async (url, title, platform) => {
+const downloadImg = async (url, title) => {
     fs.readdir(FILEPATH, (err) => {
         if(err){
             console.error("thumbnail 폴더가 없어 thumbnail 폴더를 생성합니다 ")
@@ -374,7 +374,7 @@ const downloadImg = async (url, title, platform) => {
         responseType: 'arraybuffer'
     });
 
-    fs.writeFileSync(FILEPATH + platform + "_" + title + '.jpg', img.data);
+    fs.writeFileSync(FILEPATH + title.replace('/', 'I') + '.jpg', img.data);
 }
 
 const saveToDB = async (webtoonDataList) => {
@@ -566,7 +566,7 @@ const bringWebtoonData = async () => {
 
     return webtoons;
 
-    return naverWebtoons;
+    // return naverWebtoons;
 }
 
 const renewalData = async () => {
