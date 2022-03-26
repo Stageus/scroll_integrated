@@ -7,9 +7,9 @@ const pg = require("../module/pgRequest");
 const es = require("es7");
 // iconv - charset이 utf-8이 아닌 경우 사용
 const translater = require("../module/webtoonIDParser");
-const testSet = require("../testSet");
+// const testSet = require("../testSet");
 
-const FILEPATH = "../../data/thumbnail/";
+const FILEPATH = "../thumbnail/";
 
 // const pg = require("pgRequest");
 
@@ -363,10 +363,10 @@ const toptoonCrawling = async () => {
 }
 
 const downloadImg = async (url, title, platform) => {
-    fs.readdir('thumbnail', (err) => {
+    fs.readdir(FILEPATH, (err) => {
         if(err){
             console.error("thumbnail 폴더가 없어 thumbnail 폴더를 생성합니다 ")
-            fs.mkdirSync("thumbnail");
+            fs.mkdirSync(FILEPATH);
         }
     });
 
@@ -460,7 +460,6 @@ const saveToDB = async (webtoonDataList) => {
     const sqlList4toongenre = [];
     const valuesList4toongenre = [];
     for (let index = 0; index < webtoonDataList.length; index++) {
-        console.log("insert into cycle table :", webtoonDataList[index].title, webtoonDataList[index].platformID, webtoonDataList[index].cycle);
         sqlList4cycle.push(
             "INSERT INTO toon.cycle (webtoonID, cycle)" + 
             " SELECT webtoonID, cycle" + 
@@ -471,7 +470,7 @@ const saveToDB = async (webtoonDataList) => {
         );
         valuesList4cycle.push([webtoonDataList[index].title, webtoonDataList[index].platformID, webtoonDataList[index].cycle]);
 
-        for (let index2 = 0; index2 < webtoonDataList[index2]; index2++) {
+        for (let index2 = 0; index2 < webtoonDataList[index].genre.length; index2++) {
             sqlList4toongenre.push(
                 "INSERT INTO toon.toongenre (webtoonID, genreID)" +
                 " SELECT webtoonID, genreID" +
@@ -533,7 +532,6 @@ const moveDataToElastic = async (webtoonDataList) => {
                     platformName = "toptoon";
                     break;
             }
-            const id = translater.maker(platformID, title);
             const genre = webtoonDataList[idx].genre;
             const week = webtoonDataList[idx].cycle
             const thumbnail = webtoonDataList[idx].thumbnail;
@@ -543,7 +541,6 @@ const moveDataToElastic = async (webtoonDataList) => {
             await esClient.index({
                 index: "webtoon",
                 body: {
-                    id: id,
                     title: title,
                     genre: genre,
                     week: week,
@@ -568,6 +565,8 @@ const bringWebtoonData = async () => {
     const webtoons = naverWebtoons.concat(lezhinWebtoons, toomicsWebtoons, toptoonWebtoons);
 
     return webtoons;
+
+    return naverWebtoons;
 }
 
 const renewalData = async () => {
@@ -575,8 +574,8 @@ const renewalData = async () => {
     const allWebtoonDataList = await bringWebtoonData();
     await saveToDB(allWebtoonDataList);
     // await moveDataToElastic(dataWithID);
+
+    console.log("result :", allWebtoonDataList);
 }
 
-// module.exports = renewalData;
-
-saveToDB(testSet);
+module.exports = renewalData;

@@ -3,7 +3,9 @@ const pgClient = require("pg").Client;
 const pgConfig = require("../private/pgConfig");
 
 const pgRequest = async (sql, values=null) => {
-    console.log("pgRequest Start");
+    console.log("\npgRequest Start");
+    console.log("sql :", sql);
+    console.log("values :", values + "\n");
 
     const result = {
         "success": false,
@@ -17,10 +19,11 @@ const pgRequest = async (sql, values=null) => {
     console.log("before pg.connect");
     try {
         await pg.connect();
+        console.log("connect success");
     }
     catch(err) {
-        console.log("SQL ERROR:", err);
-        result.errType = "SQL ERROR";
+        console.log("CONNECT ERROR:", err);
+        result.errType = "CONNECT ERROR";
         pg.end();
         
         return result;
@@ -42,6 +45,7 @@ const pgRequest = async (sql, values=null) => {
             sql2 = sql[index];
 
             try {
+                console.log("before pg.query1 :", index);
                 const pgResult = await pg.query(sql2, values2);
                 result.data.push(pgResult.rows);
             }
@@ -65,6 +69,7 @@ const pgRequest = async (sql, values=null) => {
         sql2 = sql;
 
         try {
+            console.log("before pg.query2");
             const pgResult = await pg.query(sql2, values2);
             result.data = pgResult.rows;
         }
@@ -79,6 +84,7 @@ const pgRequest = async (sql, values=null) => {
     }
 
     pg.end();
+    console.log("pg result :", result);
     return result;
 };
 
