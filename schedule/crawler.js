@@ -86,6 +86,7 @@ const crawling2 = async (url) => {
 
     const page = await browser.newPage();
 
+    await page.setDefaultNavigationTimeout(0);
     await page.goto(url);
 
     let content = await page.content();
@@ -151,7 +152,8 @@ const naverCrawling = async () => {
         }
     }
 
-    return webtoonDataList;
+    await saveToDB(allWebtoonDataList);
+    // await moveDataToElastic(dataWithID);
 }
 
 const lezhinCrawling = async () => {
@@ -227,7 +229,8 @@ const lezhinCrawling = async () => {
 
     }
 
-    return webtoonDataList;
+    await saveToDB(allWebtoonDataList);
+    // await moveDataToElastic(dataWithID);
 }
 
 const toomicsCrawling = async () => {
@@ -290,7 +293,8 @@ const toomicsCrawling = async () => {
         }
     }
 
-    return webtoonDataList;
+    await saveToDB(allWebtoonDataList);
+    // await moveDataToElastic(dataWithID);
 }
 
 const toptoonCrawling = async () => {
@@ -299,6 +303,7 @@ const toptoonCrawling = async () => {
     const platformID = PLATFORMID.TOPTOON;
     
     for (let index = 0; index < week.length; index++) {
+        console.log("week list url :", TOPTOON + TOPTOON_WEEKDAYLIST + week[index]);
         const weekdayListHtml = await crawling2(TOPTOON + TOPTOON_WEEKDAYLIST + week[index]);
         const weekday = cheerio.load(weekdayListHtml);
 
@@ -335,19 +340,7 @@ const toptoonCrawling = async () => {
             const genreValid = genreText.replace(/#[월화수목금토일]/g, '');
             const genre = genreValid.match(/[^#]+/g);
 
-            webtoonDataList.push({
-                link: link,
-                title: title,
-                thumbnail: title + ".jpg",
-                author: author,
-                genre: genre,
-                platformID: platformID,
-                cycle: cycle
-            })
-
-            downloadImg(thumbnail, title);
-            
-            // console.log("data :", {
+            // webtoonDataList.push({
             //     link: link,
             //     title: title,
             //     thumbnail: title + ".jpg",
@@ -355,11 +348,24 @@ const toptoonCrawling = async () => {
             //     genre: genre,
             //     platformID: platformID,
             //     cycle: cycle
-            // });
+            // })
+
+            // downloadImg(thumbnail, title);
+            
+            console.log("data :", {
+                link: link,
+                title: title,
+                thumbnail: title + ".jpg",
+                author: author,
+                genre: genre,
+                platformID: platformID,
+                cycle: cycle
+            });
         }
     }
 
-    return webtoonDataList;
+    await saveToDB(allWebtoonDataList);
+    // await moveDataToElastic(dataWithID);
 }
 
 const downloadImg = async (url, title) => {
@@ -454,23 +460,17 @@ const saveToDB = async (webtoonDataList) => {
         console.log(err);
     }
 
-    // cycle 테이블에 추가
-    const sqlList4cycle = [];
-    const valuesList4cycle = [];
-    const sqlList4toongenre = [];
-    const valuesList4toongenre = [];
-
     // let sql4cycle = "INSERT INTO toon.cycle (webtoonID, cycle)" +
-    //                 "SELECT webtoonID, CAST(cycle AS INTEGER) FROM" +
-    //                 "(SELECT UNNEST($1) AS title, UNNEST($2) AS platformID, UNNEST($3) AS cycle) AS a" +
-    //                 "JOIN SELECT * FROM toon.webtoonID AS b" +
-    //                 "ON a.title=b.title and CAST(a.platformID AS INTEGER)=b.platformID";
+    //                 " SELECT webtoonID, CAST(cycle AS INTEGER) FROM" +
+    //                 " (SELECT DISTINCT UNNEST($1) AS title, UNNEST($2) AS platformID, UNNEST($3) AS cycle) AS a" +
+    //                 " JOIN SELECT * FROM toon.webtoonID AS b" +
+    //                 " ON a.title=b.title and CAST(a.platformID AS INTEGER)=b.platformID";
 
     // let sql4toongenre = "INSERT INTO toon.cycle (webtoonID, genreID)" +
-    //                     "SELECT webtoonID, CAST(genreID AS INTEGER) FROM" +
-    //                     "(SELECT UNNEST($1) AS title, UNNEST($2) AS platformID, UNNEST($3) AS genre) AS a" +
-    //                     "JOIN SELECT * FROM toon.webtoonID AS b" +
-    //                     "ON a.title=b.title and CAST(a.platformID AS INTEGER)=b.platformID;"
+    //                     " SELECT webtoonID, CAST(genreID AS INTEGER) FROM" +
+    //                     " (SELECT UNNEST($1) AS title, UNNEST($2) AS platformID, UNNEST($3) AS genre) AS a" +
+    //                     " JOIN SELECT * FROM toon.webtoonID AS b" +
+    //                     " ON a.title=b.title and CAST(a.platformID AS INTEGER)=b.platformID;"
     // const dataList = {
     //     title: [],
     //     platformID: [],
@@ -479,14 +479,27 @@ const saveToDB = async (webtoonDataList) => {
     // }
 
     // for (let index = 0; index < webtoonDataList.length; index++) {
-    //     dataList.title.push(webtoonDataList[index].title);
-    //     dataList.platformID.push(webtoonDataList[index].platformID);
-    //     dataList.cycle.push(webtoonDataList[index].cycle);
-    //     dataList.genre.push(webtoonDataList[index].genre);
+    //     for (let index2 = 0; index2 < webtoonDataList[index].genre.length; index2++) {
+    //         dataList.title.push(webtoonDataList[index].title);
+    //         dataList.platformID.push(webtoonDataList[index].platformID);
+    //         dataList.cycle.push(webtoonDataList[index].cycle);
+    //         dataList.genre.push(webtoonDataList[index].genre);
+    //     }
+    // }
+    
+    // try {
+    //     await pg(sql4cycle, [dataList.title, dataList.platformID, dataList.cycle]);
+    //     await pg(sql4toongenre, [dataList.title, dataList.platformID, dataList.genre]);
+    // }
+    // catch(err) {
+    //     console.log(err);
     // }
 
-    // const value4cycle = [dataList.title, dataList.platformID, dataList.cycle];
-    // const value4toongenre = []
+    // cycle 테이블에 추가
+    const sqlList4cycle = [];
+    const valuesList4cycle = [];
+    const sqlList4toongenre = [];
+    const valuesList4toongenre = [];
 
     for (let index = 0; index < webtoonDataList.length; index++) {
         sqlList4cycle.push(
@@ -496,12 +509,6 @@ const saveToDB = async (webtoonDataList) => {
             " JOIN toon.webtoonID AS b" + 
             " ON a.title=b.title and a.platformID=b.platformID" +
             " ON CONFLICT (webtoonID, cycle) DO NOTHING;"
-
-            // "INSERT INTO toon.cycle (webtoonID, cycle)" +
-            // "SELECT webtoonID, CAST(cycle AS INTEGER) FROM" +
-            // "(SELECT UNNEST($1) AS title, UNNEST($2) AS platformID, UNNEST($3) AS cycle) AS a" +
-            // "JOIN SELECT * FROM toon.webtoonID AS b" +
-            // "ON a.title=b.title and CAST(a.platformID AS INTEGER)=b.platformID"
         );
         valuesList4cycle.push([webtoonDataList[index].title, webtoonDataList[index].platformID, webtoonDataList[index].cycle]);
 
@@ -515,12 +522,6 @@ const saveToDB = async (webtoonDataList) => {
                 " JOIN toon.genre AS c" +
                 " ON a.genreName=c.genreName" +
                 " ON CONFLICT (webtoonID, genreID) DO NOTHING;"
-
-                // "INSERT INTO toon.cycle (webtoonID, genreID)" +
-                // "SELECT webtoonID, CAST(genreID AS INTEGER) FROM" +
-                // "(SELECT UNNEST($1) AS title, UNNEST($2) AS platformID, UNNEST($3) AS genre) AS a" +
-                // "JOIN SELECT * FROM toon.webtoonID AS b" +
-                // "ON a.title=b.title and CAST(a.platformID AS INTEGER)=b.platformID;"
             )
             valuesList4toongenre.push(
                 [webtoonDataList[index].title, webtoonDataList[index].platformID, webtoonDataList[index].genre[index2]]
@@ -574,7 +575,7 @@ const moveDataToElastic = async (webtoonDataList) => {
                     break;
             }
             const genre = webtoonDataList[idx].genre;
-            const week = webtoonDataList[idx].cycle
+            const week = webtoonDataList[idx].cycle;
             const thumbnail = webtoonDataList[idx].thumbnail;
             const link = webtoonDataList[idx].link;
             const author = webtoonDataList[idx].author;
@@ -598,23 +599,15 @@ const moveDataToElastic = async (webtoonDataList) => {
 }
 
 const bringWebtoonData = async () => {
-    const naverWebtoons = await naverCrawling();
-    // const lezhinWebtoons = await lezhinCrawling();
-    // const toomicsWebtoons = await toomicsCrawling();
-    // const toptoonWebtoons = await toptoonCrawling();
-
-    // const webtoons = naverWebtoons.concat(lezhinWebtoons, toomicsWebtoons, toptoonWebtoons);
-
-    // return webtoons;
-
-    return naverWebtoons;
+    await naverCrawling();
+    await lezhinCrawling();
+    await toomicsCrawling();
+    await toptoonCrawling();
 }
 
 const renewalData = async () => {
     await dbCleaner();
-    const allWebtoonDataList = await bringWebtoonData();
-    await saveToDB(allWebtoonDataList);
-    // await moveDataToElastic(dataWithID);
+    await bringWebtoonData();
 
     console.log("result :", allWebtoonDataList);
 }
