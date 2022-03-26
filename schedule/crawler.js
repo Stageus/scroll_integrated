@@ -297,11 +297,11 @@ const toptoonCrawling = async () => {
     const week = [1, 2, 3, 4, 5, 6, 7, 8];
     const webtoonDataList = [];
     const platformID = PLATFORMID.TOPTOON;
-
-    const weekdayListHtml = await crawling2(TOPTOON + TOPTOON_WEEKDAYLIST + 1);
-    const weekday = cheerio.load(weekdayListHtml);
     
     for (let index = 0; index < week.length; index++) {
+        const weekdayListHtml = await crawling2(TOPTOON + TOPTOON_WEEKDAYLIST + week[index]);
+        const weekday = cheerio.load(weekdayListHtml);
+
         let cycle = null;
         if (week[index] == 7) {
             cycle = 0;
@@ -310,7 +310,7 @@ const toptoonCrawling = async () => {
             cycle = week[index];
         }
         console.log("toptoon cycle :", cycle);
-
+        
         console.log("length :", weekday(TOPTOON_WEBTOONLIST(week[index])).children().length);
         for (let index2 = 1; index2 <= weekday(TOPTOON_WEBTOONLIST(week[index])).children().length; index2++) {
 
@@ -346,7 +346,7 @@ const toptoonCrawling = async () => {
             })
 
             downloadImg(thumbnail, title);
-
+            
             // console.log("data :", {
             //     link: link,
             //     title: title,
@@ -374,7 +374,7 @@ const downloadImg = async (url, title) => {
         responseType: 'arraybuffer'
     });
 
-    fs.writeFileSync(FILEPATH + title.replace('/', 'I') + '.jpg', img.data);
+    fs.writeFileSync(FILEPATH + title.replace(/\//g, 'I') + '.jpg', img.data);
 }
 
 const saveToDB = async (webtoonDataList) => {
@@ -459,6 +459,35 @@ const saveToDB = async (webtoonDataList) => {
     const valuesList4cycle = [];
     const sqlList4toongenre = [];
     const valuesList4toongenre = [];
+
+    // let sql4cycle = "INSERT INTO toon.cycle (webtoonID, cycle)" +
+    //                 "SELECT webtoonID, CAST(cycle AS INTEGER) FROM" +
+    //                 "(SELECT UNNEST($1) AS title, UNNEST($2) AS platformID, UNNEST($3) AS cycle) AS a" +
+    //                 "JOIN SELECT * FROM toon.webtoonID AS b" +
+    //                 "ON a.title=b.title and CAST(a.platformID AS INTEGER)=b.platformID";
+
+    // let sql4toongenre = "INSERT INTO toon.cycle (webtoonID, genreID)" +
+    //                     "SELECT webtoonID, CAST(genreID AS INTEGER) FROM" +
+    //                     "(SELECT UNNEST($1) AS title, UNNEST($2) AS platformID, UNNEST($3) AS genre) AS a" +
+    //                     "JOIN SELECT * FROM toon.webtoonID AS b" +
+    //                     "ON a.title=b.title and CAST(a.platformID AS INTEGER)=b.platformID;"
+    // const dataList = {
+    //     title: [],
+    //     platformID: [],
+    //     cycle: [],
+    //     genre: []
+    // }
+
+    // for (let index = 0; index < webtoonDataList.length; index++) {
+    //     dataList.title.push(webtoonDataList[index].title);
+    //     dataList.platformID.push(webtoonDataList[index].platformID);
+    //     dataList.cycle.push(webtoonDataList[index].cycle);
+    //     dataList.genre.push(webtoonDataList[index].genre);
+    // }
+
+    // const value4cycle = [dataList.title, dataList.platformID, dataList.cycle];
+    // const value4toongenre = []
+
     for (let index = 0; index < webtoonDataList.length; index++) {
         sqlList4cycle.push(
             "INSERT INTO toon.cycle (webtoonID, cycle)" + 
@@ -467,6 +496,12 @@ const saveToDB = async (webtoonDataList) => {
             " JOIN toon.webtoonID AS b" + 
             " ON a.title=b.title and a.platformID=b.platformID" +
             " ON CONFLICT (webtoonID, cycle) DO NOTHING;"
+
+            // "INSERT INTO toon.cycle (webtoonID, cycle)" +
+            // "SELECT webtoonID, CAST(cycle AS INTEGER) FROM" +
+            // "(SELECT UNNEST($1) AS title, UNNEST($2) AS platformID, UNNEST($3) AS cycle) AS a" +
+            // "JOIN SELECT * FROM toon.webtoonID AS b" +
+            // "ON a.title=b.title and CAST(a.platformID AS INTEGER)=b.platformID"
         );
         valuesList4cycle.push([webtoonDataList[index].title, webtoonDataList[index].platformID, webtoonDataList[index].cycle]);
 
@@ -480,6 +515,12 @@ const saveToDB = async (webtoonDataList) => {
                 " JOIN toon.genre AS c" +
                 " ON a.genreName=c.genreName" +
                 " ON CONFLICT (webtoonID, genreID) DO NOTHING;"
+
+                // "INSERT INTO toon.cycle (webtoonID, genreID)" +
+                // "SELECT webtoonID, CAST(genreID AS INTEGER) FROM" +
+                // "(SELECT UNNEST($1) AS title, UNNEST($2) AS platformID, UNNEST($3) AS genre) AS a" +
+                // "JOIN SELECT * FROM toon.webtoonID AS b" +
+                // "ON a.title=b.title and CAST(a.platformID AS INTEGER)=b.platformID;"
             )
             valuesList4toongenre.push(
                 [webtoonDataList[index].title, webtoonDataList[index].platformID, webtoonDataList[index].genre[index2]]
@@ -558,15 +599,15 @@ const moveDataToElastic = async (webtoonDataList) => {
 
 const bringWebtoonData = async () => {
     const naverWebtoons = await naverCrawling();
-    const lezhinWebtoons = await lezhinCrawling();
-    const toomicsWebtoons = await toomicsCrawling();
-    const toptoonWebtoons = await toptoonCrawling();
+    // const lezhinWebtoons = await lezhinCrawling();
+    // const toomicsWebtoons = await toomicsCrawling();
+    // const toptoonWebtoons = await toptoonCrawling();
 
-    const webtoons = naverWebtoons.concat(lezhinWebtoons, toomicsWebtoons, toptoonWebtoons);
+    // const webtoons = naverWebtoons.concat(lezhinWebtoons, toomicsWebtoons, toptoonWebtoons);
 
-    return webtoons;
+    // return webtoons;
 
-    // return naverWebtoons;
+    return naverWebtoons;
 }
 
 const renewalData = async () => {
@@ -578,4 +619,8 @@ const renewalData = async () => {
     console.log("result :", allWebtoonDataList);
 }
 
-module.exports = renewalData;
+// module.exports = renewalData;
+
+// renewalData();
+
+toptoonCrawling();
