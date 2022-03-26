@@ -7,9 +7,9 @@ const pg = require("../module/pgRequest");
 const es = require("es7");
 // iconv - charset이 utf-8이 아닌 경우 사용
 const translater = require("../module/webtoonIDParser");
+const testSet = require("../testSet");
 
-// const FILEPATH = "../../data/thumbnail/";
-const FILEPATH = "./thumbnail/";
+const FILEPATH = "../../data/thumbnail/";
 
 // const pg = require("pgRequest");
 
@@ -82,21 +82,14 @@ const crawling = async (url) => {
 };
 
 const crawling2 = async (url) => {
-    let content = null;
-    try {
-        const browser = await puppeteer.launch();
-    
-        const page = await browser.newPage();
-    
-        await page.goto(url);
-    
-        content = await page.content();
-        await browser.close();
-    }
-    catch(err) {
-        console.log("\ncrawling2 에러");
-        console.log(err);
-    }
+    const browser = await puppeteer.launch();
+
+    const page = await browser.newPage();
+
+    await page.goto(url);
+
+    let content = await page.content();
+    await browser.close();
 
     return content;
 }
@@ -137,7 +130,7 @@ const naverCrawling = async () => {
             webtoonDataList.push({
                 link: link,
                 title: title,
-                thumbnail: platformID + "_" + title + ".jpg",
+                thumbnail: title + ".jpg",
                 author: author,
                 genre: genre,
                 platformID: platformID,
@@ -149,7 +142,7 @@ const naverCrawling = async () => {
             // console.log("data :", {
             //     link: link,
             //     title: title,
-            //     thumbnail: platformID + "_" + title + ".jpg",
+            //     thumbnail: title + ".jpg",
             //     author: author,
             //     genre: genre,
             //     platformID: platformID,
@@ -212,7 +205,7 @@ const lezhinCrawling = async () => {
             webtoonDataList.push({
                 link: link,
                 title: title,
-                thumbnail: platformID + "_" + title + ".jpg",
+                thumbnail: title + ".jpg",
                 author: author,
                 genre: genre,
                 platformID: platformID,
@@ -224,7 +217,7 @@ const lezhinCrawling = async () => {
             // console.log("data :", {
             //     link: link,
             //     title: title,
-            //     thumbnail: platformID + "_" + title + ".jpg",
+            //     thumbnail: title + ".jpg",
             //     author: author,
             //     genre: genre,
             //     platformID: platformID,
@@ -276,7 +269,7 @@ const toomicsCrawling = async () => {
             webtoonDataList.push({
                 link: link,
                 title: title,
-                thumbnail: platformID + "_" + title + ".jpg",
+                thumbnail: title + ".jpg",
                 author: author,
                 genre: genre,
                 platformID: platformID,
@@ -288,7 +281,7 @@ const toomicsCrawling = async () => {
             // console.log("data :", {
             //     link: link,
             //     title: title,
-            //     thumbnail: platformID + "_" + title + ".jpg",
+            //     thumbnail: title + ".jpg",
             //     author: author,
             //     genre: genre,
             //     platformID: platformID,
@@ -345,14 +338,14 @@ const toptoonCrawling = async () => {
             webtoonDataList.push({
                 link: link,
                 title: title,
-                thumbnail: platformID + "_" + title + ".jpg",
+                thumbnail: title + ".jpg",
                 author: author,
                 genre: genre,
                 platformID: platformID,
                 cycle: cycle
             })
 
-            downloadImg(thumbnail, title, "toptoon");
+            downloadImg(thumbnail, title, "tooptoon");
 
             // console.log("data :", {
             //     link: link,
@@ -369,7 +362,7 @@ const toptoonCrawling = async () => {
     return webtoonDataList;
 }
 
-const downloadImg = async (url, title, platformID) => {
+const downloadImg = async (url, title, platform) => {
     fs.readdir('thumbnail', (err) => {
         if(err){
             console.error("thumbnail 폴더가 없어 thumbnail 폴더를 생성합니다 ")
@@ -381,23 +374,23 @@ const downloadImg = async (url, title, platformID) => {
         responseType: 'arraybuffer'
     });
 
-    fs.writeFileSync(FILEPATH + platformID + "_" + title + '.jpg', img.data);
+    fs.writeFileSync(FILEPATH + platform + "_" + title + '.jpg', img.data);
 }
 
 const saveToDB = async (webtoonDataList) => {
     // 조회수 가져오기
     const viewCount = 0
-    let sql = "INSERT TO toon.webtoon" + 
+    let sql = "INSERT INTO toon.webtoon" + 
             " (title, thumbnail, link, platformID, viewCount, author)" + 
             " VALUES";
     const values = [];
 
-    let sql4ID = "INSERT TO toon.webtoonID" + 
+    let sql4ID = "INSERT INTO toon.webtoonID" + 
                 " (title, platformID)" + 
                 " VALUES";
     const values4ID = [];
 
-    let sql4genre =  "INSERT TO toon.genre" + 
+    let sql4genre =  "INSERT INTO toon.genre" + 
                     " (genreName)" + 
                     " VALUES";
     const values4genre = [];
@@ -406,7 +399,7 @@ const saveToDB = async (webtoonDataList) => {
 
     // webtoon 테이블에 추가
     for (let index = 0; index < webtoonDataList.length; index++) {
-        for (let index2 = 0; index2 < webtoonDataList[index].genre; index2++) {
+        for (let index2 = 0; index2 < webtoonDataList[index].genre.length; index2++) {
             if (index == 0 && index2 == 0) {
                 sql4genre += " ";
             }
@@ -442,7 +435,7 @@ const saveToDB = async (webtoonDataList) => {
         values.push(webtoonDataList[index].author);
 
              
-        sql4ID = "($" + (2*index + 1) +
+        sql4ID += "($" + (2*index + 1) +
                 ", $" + (2*index + 2) + ")"
         values4ID.push(webtoonDataList[index].title);
         values4ID.push(webtoonDataList[index].platformID);
@@ -467,15 +460,16 @@ const saveToDB = async (webtoonDataList) => {
     const sqlList4toongenre = [];
     const valuesList4toongenre = [];
     for (let index = 0; index < webtoonDataList.length; index++) {
+        console.log("insert into cycle table :", webtoonDataList[index].title, webtoonDataList[index].platformID, webtoonDataList[index].cycle);
         sqlList4cycle.push(
             "INSERT INTO toon.cycle (webtoonID, cycle)" + 
             " SELECT webtoonID, cycle" + 
-            " FROM (SELECT $1 AS title, $2 AS platformID, $3 AS cycle) AS a" + 
+            " FROM (SELECT $1 AS title, cast($2 AS INTEGER) AS platformID, cast($3 AS INTEGER) AS cycle) AS a" + 
             " JOIN toon.webtoonID AS b" + 
-            " ON a.title=b.title and a.platform=b.platformID" +
+            " ON a.title=b.title and a.platformID=b.platformID" +
             " ON CONFLICT (webtoonID, cycle) DO NOTHING;"
         );
-        values4cycle.push([webtoonDataList[index].title, webtoonDataList[index].platformID, webtoonDataList[index].cycle]);
+        valuesList4cycle.push([webtoonDataList[index].title, webtoonDataList[index].platformID, webtoonDataList[index].cycle]);
 
         for (let index2 = 0; index2 < webtoonDataList[index2]; index2++) {
             sqlList4toongenre.push(
@@ -583,4 +577,6 @@ const renewalData = async () => {
     // await moveDataToElastic(dataWithID);
 }
 
-module.exports = renewalData;
+// module.exports = renewalData;
+
+saveToDB(testSet);
