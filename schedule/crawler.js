@@ -475,7 +475,7 @@ const saveToDB = async (webtoonDataList) => {
             sqlList4toongenre.push(
                 "INSERT INTO toon.toongenre (webtoonID, genreID)" +
                 " SELECT webtoonID, genreID" +
-                " FROM (SELECT $1 AS title, $2 AS platformID, $3 AS genreName) AS a" +
+                " FROM (SELECT $1 AS title, cast($2 AS INTEGER) AS platformID, $3 AS genreName) AS a" +
                 " JOIN toon.webtoonID AS b" +
                 " ON a.title=b.title and a.platformID = b.platformID" +
                 " JOIN toon.genre AS c" +
