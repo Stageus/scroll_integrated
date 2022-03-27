@@ -51,6 +51,7 @@ const pgRequest = async (sql, values=null) => {
             }
             catch(err) {
                 console.log("SQL ERROR:", err);
+                console.log(sql2, values2);
                 result.errType = "SQL ERROR";
                 pg.end();
             }

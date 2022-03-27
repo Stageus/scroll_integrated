@@ -145,6 +145,9 @@ router.post("", (req, res) => {
                         }
                     }
                 }
+                for (let i = 0; i < result.webtoon.length; i++) {
+                    result.webtoon[i].thumbnail = "http://54.180.93.229:3000/thumbnail/" + result.webtoon[i].thumbnail
+                }
 
                 // 토큰 인증
                 let jwtData = null;
