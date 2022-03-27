@@ -70,7 +70,35 @@ const PLATFORMID = {
     LEZHIN: 2,
     TOOMICS: 4,
     TOPTOON: 3
+};
+
+const sleep = (ms) => new Promise((resolve, reject) => {
+    setTimeout(() => {console.log("sleepEnd(" + ms + ")");resolve();}, ms);
+})
+
+class Mutex {
+    constructor() {
+        this.lock = false;
+    }
+
+    async acquire () {
+        while (true) {
+            if (this.lock === false) {
+                break;
+            }
+
+            await sleep(100);
+        }
+
+        this.lock = true;
+    }
+
+    release() {
+        this.lock = false;
+    }
 }
+
+const mutex = new Mutex();
 
 const crawling = async (url) => {
     console.log("crawler start");
@@ -152,7 +180,7 @@ const naverCrawling = async () => {
         }
     }
 
-    await saveToDB(allWebtoonDataList);
+    await saveToDB(webtoonDataList);
     // await moveDataToElastic(dataWithID);
 }
 
@@ -204,7 +232,17 @@ const lezhinCrawling = async () => {
             // const genreString = '#' + genre.join(' #');
             // console.log(genreString);
 
-            webtoonDataList.push({
+            // webtoonDataList.push({
+            //     link: link,
+            //     title: title,
+            //     thumbnail: title + ".jpg",
+            //     author: author,
+            //     genre: genre,
+            //     platformID: platformID,
+            //     cycle: cycle
+            // })
+            
+            await saveToDB([{
                 link: link,
                 title: title,
                 thumbnail: title + ".jpg",
@@ -212,7 +250,7 @@ const lezhinCrawling = async () => {
                 genre: genre,
                 platformID: platformID,
                 cycle: cycle
-            })
+            }]);
 
             downloadImg(thumbnail, title);
 
@@ -229,7 +267,7 @@ const lezhinCrawling = async () => {
 
     }
 
-    await saveToDB(allWebtoonDataList);
+    // await saveToDB(webtoonDataList);
     // await moveDataToElastic(dataWithID);
 }
 
@@ -269,7 +307,17 @@ const toomicsCrawling = async () => {
             const author = webtoon(TOOMICS_AUTHOR).text();
             const thumbnail = webtoon(TOOMICS_THUMBNAIL).attr("src");
 
-            webtoonDataList.push({
+            // webtoonDataList.push({
+            //     link: link,
+            //     title: title,
+            //     thumbnail: title + ".jpg",
+            //     author: author,
+            //     genre: genre,
+            //     platformID: platformID,
+            //     cycle: cycle
+            // })
+            
+            await saveToDB([{
                 link: link,
                 title: title,
                 thumbnail: title + ".jpg",
@@ -277,7 +325,7 @@ const toomicsCrawling = async () => {
                 genre: genre,
                 platformID: platformID,
                 cycle: cycle
-            })
+            }]);
 
             downloadImg(thumbnail, title);
 
@@ -293,7 +341,7 @@ const toomicsCrawling = async () => {
         }
     }
 
-    await saveToDB(allWebtoonDataList);
+    // await saveToDB(webtoonDataList);
     // await moveDataToElastic(dataWithID);
 }
 
@@ -349,10 +397,8 @@ const toptoonCrawling = async () => {
             //     platformID: platformID,
             //     cycle: cycle
             // })
-
-            // downloadImg(thumbnail, title);
             
-            console.log("data :", {
+            await saveToDB([{
                 link: link,
                 title: title,
                 thumbnail: title + ".jpg",
@@ -360,11 +406,23 @@ const toptoonCrawling = async () => {
                 genre: genre,
                 platformID: platformID,
                 cycle: cycle
-            });
+            }]);
+
+            downloadImg(thumbnail, title);
+
+            // console.log("data :", {
+            //     link: link,
+            //     title: title,
+            //     thumbnail: title + ".jpg",
+            //     author: author,
+            //     genre: genre,
+            //     platformID: platformID,
+            //     cycle: cycle
+            // })
         }
     }
 
-    await saveToDB(allWebtoonDataList);
+    // await saveToDB(webtoonDataList);
     // await moveDataToElastic(dataWithID);
 }
 
@@ -385,6 +443,7 @@ const downloadImg = async (url, title) => {
 
 const saveToDB = async (webtoonDataList) => {
     // 조회수 가져오기
+
     const viewCount = 0
     let sql = "INSERT INTO toon.webtoon" + 
             " (title, thumbnail, link, platformID, viewCount, author)" + 
@@ -452,9 +511,11 @@ const saveToDB = async (webtoonDataList) => {
     sql4ID += " ON CONFLICT (title, platformID) DO NOTHING;";
 
     try {
+        await mutex.acquire();
         await pg(sql4ID, values4ID);
         await pg(sql, values);
         await pg(sql4genre, values4genre);
+        mutex.release();
     }
     catch(err) {
         console.log(err);
@@ -530,8 +591,10 @@ const saveToDB = async (webtoonDataList) => {
     }
 
     try {
+        await mutex.acquire();
         await pg(sqlList4cycle, valuesList4cycle);
         await pg(sqlList4toongenre, valuesList4toongenre);
+        mutex.release();
     }
     catch(err) {
         console.log(err);
@@ -539,7 +602,7 @@ const saveToDB = async (webtoonDataList) => {
 }
 
 const dbCleaner = async () => {
-
+    // webtoon, cycle, toongenre 테이블 비우기
 }
 
 const moveDataToElastic = async (webtoonDataList) => {
@@ -608,12 +671,6 @@ const bringWebtoonData = async () => {
 const renewalData = async () => {
     await dbCleaner();
     await bringWebtoonData();
-
-    console.log("result :", allWebtoonDataList);
 }
 
-// module.exports = renewalData;
-
-// renewalData();
-
-toptoonCrawling();
+module.exports = renewalData;
