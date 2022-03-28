@@ -427,6 +427,8 @@ const toptoonCrawling = async () => {
 }
 
 const downloadImg = async (url, title) => {
+    await mutex.acquire();
+
     fs.readdir(FILEPATH, (err) => {
         if(err){
             console.error("thumbnail 폴더가 없어 thumbnail 폴더를 생성합니다 ")
@@ -439,6 +441,8 @@ const downloadImg = async (url, title) => {
     });
 
     fs.writeFileSync(FILEPATH + title.replace(/\//g, 'I') + '.jpg', img.data);
+
+    mutex.release()
 }
 
 const saveToDB = async (webtoonDataList) => {
