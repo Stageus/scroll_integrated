@@ -166,7 +166,7 @@ const naverCrawling = async () => {
                 cycle: cycle
             })
             
-            downloadImg(thumbnail, title);
+            await downloadImg(thumbnail, title);
 
             // console.log("data :", {
             //     link: link,
@@ -252,7 +252,7 @@ const lezhinCrawling = async () => {
                 cycle: cycle
             }]);
 
-            downloadImg(thumbnail, title);
+            await downloadImg(thumbnail, title);
 
             // console.log("data :", {
             //     link: link,
@@ -327,7 +327,7 @@ const toomicsCrawling = async () => {
                 cycle: cycle
             }]);
 
-            downloadImg(thumbnail, title);
+            await downloadImg(thumbnail, title);
 
             // console.log("data :", {
             //     link: link,
@@ -408,7 +408,7 @@ const toptoonCrawling = async () => {
                 cycle: cycle
             }]);
 
-            downloadImg(thumbnail, title);
+            await downloadImg(thumbnail, title);
 
             // console.log("data :", {
             //     link: link,
