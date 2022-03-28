@@ -112,13 +112,33 @@ const crawling = async (url) => {
 const crawling2 = async (url) => {
     const browser = await puppeteer.launch();
 
-    const page = await browser.newPage();
+    let page;
+    try {
+        page = await browser.newPage();
+    }
+    catch(err) {
+        console.log("\nnewPage() err");
+        console.log(err);
+    }
 
-    await page.setDefaultNavigationTimeout(0);
-    await page.goto(url);
+    try {
+        await page.setDefaultNavigationTimeout(0);
+        await page.goto(url);
+    }
+    catch(err) {
+        console.log("\ngoto() err");
+        console.log(err);
+    }
 
-    let content = await page.content();
-    await browser.close();
+    let content;
+    try {
+        content = await page.content();
+        await browser.close();
+    }
+    catch(err) {
+        console.log("\ncontent() or close() err");
+        console.log(err);
+    }
 
     return content;
 }
@@ -366,6 +386,7 @@ const toptoonCrawling = async () => {
         
         console.log("length :", weekday(TOPTOON_WEBTOONLIST(week[index])).children().length);
         for (let index2 = 1; index2 <= weekday(TOPTOON_WEBTOONLIST(week[index])).children().length; index2++) {
+            console.log("webtoon " + index + "-" + index2);
 
             const link = TOPTOON + weekday(TOPTOON_LINK(week[index], index2)).attr('href');
 
@@ -375,7 +396,7 @@ const toptoonCrawling = async () => {
                 thumbnail = weekday(TOPTOON_THUMBNAIL(week[index], index2)).attr("data-bg");
             }
             else {
-                thumbnail = /\((.+)\)/.exec(thumbnailCheerio)[1];
+                thumbnail = /(https.+\.jpg|https.+\.png)/.exec(thumbnailCheerio)[1];
             }
 
             const webtoonHtml = await crawling2(link);
@@ -387,6 +408,20 @@ const toptoonCrawling = async () => {
             const genreText = webtoon(TOPTOON_GENRE).text().replace(/\s{2,}/g, '');
             const genreValid = genreText.replace(/#[월화수목금토일]/g, '');
             const genre = genreValid.match(/[^#]+/g);
+
+            // console.log("\nhtml :", weekdayListHtml);
+
+            console.log("thumbnailCheerio :", thumbnailCheerio);
+            console.log("thumbnail :", thumbnail);
+            console.log("data :", {
+                link: link,
+                title: title,
+                thumbnail: title + ".jpg",
+                author: author,
+                genre: genre,
+                platformID: platformID,
+                cycle: cycle
+            })
 
             // webtoonDataList.push({
             //     link: link,
@@ -407,18 +442,10 @@ const toptoonCrawling = async () => {
                 platformID: platformID,
                 cycle: cycle
             }]);
+            console.log("after saveToDB");
 
             await downloadImg(thumbnail, title);
-
-            // console.log("data :", {
-            //     link: link,
-            //     title: title,
-            //     thumbnail: title + ".jpg",
-            //     author: author,
-            //     genre: genre,
-            //     platformID: platformID,
-            //     cycle: cycle
-            // })
+            console.log("after downloadImg");
         }
     }
 
@@ -428,19 +455,33 @@ const toptoonCrawling = async () => {
 
 const downloadImg = async (url, title) => {
     await mutex.acquire();
+    console.log("\n" + url + "\n");
 
+    console.log("before fs");
     fs.readdir(FILEPATH, (err) => {
         if(err){
             console.error("thumbnail 폴더가 없어 thumbnail 폴더를 생성합니다 ")
             fs.mkdirSync(FILEPATH);
         }
     });
+    console.log("after fs");
 
-    const img = await axios.get(url , {
-        responseType: 'arraybuffer'
-    });
+    console.log("before axios");
+    let img;
+    try {
+        img = await axios.get(url , {
+            responseType: 'arraybuffer'
+        });
+    }
+    catch(err) {
+        console.log("axios err");
+        console.log(err);
+    }
+    console.log("after axios");
 
+    console.log("before writeFileSync");
     fs.writeFileSync(FILEPATH + title.replace(/\//g, 'I') + '.jpg', img.data);
+    console.log("after axios");
 
     mutex.release()
 }
@@ -500,7 +541,7 @@ const saveToDB = async (webtoonDataList) => {
         values.push(webtoonDataList[index].thumbnail);
         values.push(webtoonDataList[index].link);
         values.push(webtoonDataList[index].platformID);
-        values.push(webtoonDataList[index].viewCount);
+        values.push(viewCount);
         values.push(webtoonDataList[index].author);
 
              
@@ -607,6 +648,14 @@ const saveToDB = async (webtoonDataList) => {
 
 const dbCleaner = async () => {
     // webtoon, cycle, toongenre 테이블 비우기
+
+    const sql = [
+        "DELETE FROM toon.webtoon",
+        "DELETE FROM toon.cycle",
+        "DELETE FROM toon.toongenre",
+    ];
+
+    pg(sql);
 }
 
 const moveDataToElastic = async (webtoonDataList) => {
@@ -673,7 +722,7 @@ const bringWebtoonData = async () => {
 }
 
 const renewalData = async () => {
-    await dbCleaner();
+    // await dbCleaner();
     await bringWebtoonData();
 }
 
