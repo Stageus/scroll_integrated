@@ -8,7 +8,7 @@ const es = require("es7");
 // iconv - charset이 utf-8이 아닌 경우 사용
 // const testSet = require("../testSet");
 
-const FILEPATH = "../thumbnail/";
+const FILEPATH = "./thumbnail/";
 
 // const pg = require("pgRequest");
 
