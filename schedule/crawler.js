@@ -6,7 +6,6 @@ const fs = require("fs");
 const pg = require("../module/pgRequest");
 const es = require("es7");
 // iconv - charset이 utf-8이 아닌 경우 사용
-const translater = require("../module/webtoonIDParser");
 // const testSet = require("../testSet");
 
 const FILEPATH = "../thumbnail/";
@@ -31,9 +30,11 @@ const LEZHIN_WEEKDAYLIST = "/scheduled?day="; // day=0 ~ 6 : 일 ~ 토, day=n : 
 const LEZHIN_WEBTOONLIST = "#scheduled-day-";
 const LEZHIN_LINK = (w, n) => {
     return "#scheduled-day-" + w + " > li:nth-child(" + n + ") > a";
-}
+} // 
 const LEZHIN_TITLE = "#comic-info > div > h2";
-const LEZHIN_THUMBNAIL = "#comic-info > picture > source:nth-child(3)";
+const LEZHIN_THUMBNAIL = (w, n) => {  // #scheduled-day-0 > li:nth-child(5) > a > div.lzComic__thumb > picture > img
+    return "#scheduled-day-" + w + " > li:nth-child(" + n + ") > a > div.lzComic__thumb > picture > img";
+}
 const LEZHIN_AUTHOR = "#comic-info > div > div.comicInfo__artist";
 // #comic-info > div > div.comicInfo__artist
 const LEZHIN_GENRE = "#comic-info > div > div.comicInfo__tags";
@@ -71,6 +72,8 @@ const PLATFORMID = {
     TOOMICS: 4,
     TOPTOON: 3
 };
+
+const thumbnailURL = [];
 
 const sleep = (ms) => new Promise((resolve, reject) => {
     setTimeout(() => {console.log("sleepEnd(" + ms + ")");resolve();}, ms);
@@ -173,8 +176,15 @@ const naverCrawling = async () => {
             const author = webtoon(NAVER_AUTHOR).text().replace(/^\s+/g, '');
             const genre = webtoon(NAVER_GENRE).text().replace(/\s+/g, '').split(',');
 
-            // const genreString = '#' + genre.join(' #');
-            // console.log(genreString);
+            console.log("data :", {
+                link: link,
+                title: title,
+                thumbnail: title + ".jpg",
+                author: author,
+                genre: genre,
+                platformID: platformID,
+                cycle: cycle
+            })
 
             webtoonDataList.push({
                 link: link,
@@ -187,16 +197,6 @@ const naverCrawling = async () => {
             })
             
             await downloadImg(thumbnail, title);
-
-            // console.log("data :", {
-            //     link: link,
-            //     title: title,
-            //     thumbnail: title + ".jpg",
-            //     author: author,
-            //     genre: genre,
-            //     platformID: platformID,
-            //     cycle: cycle
-            // })
         }
     }
 
@@ -209,10 +209,10 @@ const lezhinCrawling = async () => {
     const webtoonDataList = [];
     const platformID = PLATFORMID.LEZHIN;
 
-    const weekdayListHtml = await crawling2(LEZHIN + LEZHIN_WEEKDAYLIST + 0);
-    const weekday = cheerio.load(weekdayListHtml);
-
     for (let index = 0; index < week.length; index++) {
+        const weekdayListHtml = await crawling2(LEZHIN + LEZHIN_WEEKDAYLIST + week[index]);
+        const weekday = cheerio.load(weekdayListHtml);
+
         let cycle = null;
         if (week[index] == "n") {
             cycle = 7;
@@ -221,13 +221,15 @@ const lezhinCrawling = async () => {
             cycle = week[index];
         }
         console.log("lezhin cycle :", cycle);
-
+        
         console.log("webtoonList.length :", weekday(LEZHIN_WEBTOONLIST + week[index]).children().length);
         for (let index2 = 1; index2 <= weekday(LEZHIN_WEBTOONLIST + week[index]).children().length; index2++) {
 
             const link = LEZHIN + weekday(LEZHIN_LINK(week[index], index2)).attr('href');
-            weekday(LEZHIN_LINK(week[index], index2)).attr('href')
-
+            let thumbnail = weekday(LEZHIN_THUMBNAIL(week[index], index2)).attr('src');
+            if (!/^https.+/.test(thumbnail)) {
+                thumbnail = weekday(LEZHIN_THUMBNAIL(week[index], index2)).attr('data-src');
+            }
             const webtoonHtml = await crawling2(link);
             const webtoon = cheerio.load(webtoonHtml);
 
@@ -245,22 +247,30 @@ const lezhinCrawling = async () => {
                 }
             }
 
-            const thumbnail = webtoon(LEZHIN_THUMBNAIL).attr("srcset").replace(/,.+$/, '');
             const genreText = webtoon(LEZHIN_GENRE).text();
             const genre = genreText.match(/[^#]+/g);
 
-            // const genreString = '#' + genre.join(' #');
-            // console.log(genreString);
+            // console.log("webtoon html :", webtoonHtml);
+            // console.log("thumbnail link:", thumbnail);
+            console.log("data :", {
+                link: link,
+                title: title,
+                thumbnail: title + ".jpg",
+                author: author,
+                genre: genre,
+                platformID: platformID,
+                cycle: cycle
+            })
 
-            // webtoonDataList.push({
-            //     link: link,
-            //     title: title,
-            //     thumbnail: title + ".jpg",
-            //     author: author,
-            //     genre: genre,
-            //     platformID: platformID,
-            //     cycle: cycle
-            // })
+            webtoonDataList.push({
+                link: link,
+                title: title,
+                thumbnail: title + ".jpg",
+                author: author,
+                genre: genre,
+                platformID: platformID,
+                cycle: cycle
+            })
             
             await saveToDB([{
                 link: link,
@@ -273,16 +283,6 @@ const lezhinCrawling = async () => {
             }]);
 
             await downloadImg(thumbnail, title);
-
-            // console.log("data :", {
-            //     link: link,
-            //     title: title,
-            //     thumbnail: title + ".jpg",
-            //     author: author,
-            //     genre: genre,
-            //     platformID: platformID,
-            //     cycle: cycle
-            // })
         }
 
     }
@@ -327,15 +327,25 @@ const toomicsCrawling = async () => {
             const author = webtoon(TOOMICS_AUTHOR).text();
             const thumbnail = webtoon(TOOMICS_THUMBNAIL).attr("src");
 
-            // webtoonDataList.push({
-            //     link: link,
-            //     title: title,
-            //     thumbnail: title + ".jpg",
-            //     author: author,
-            //     genre: genre,
-            //     platformID: platformID,
-            //     cycle: cycle
-            // })
+            console.log("data :", {
+                link: link,
+                title: title,
+                thumbnail: title + ".jpg",
+                author: author,
+                genre: genre,
+                platformID: platformID,
+                cycle: cycle
+            })
+
+            webtoonDataList.push({
+                link: link,
+                title: title,
+                thumbnail: title + ".jpg",
+                author: author,
+                genre: genre,
+                platformID: platformID,
+                cycle: cycle
+            })
             
             await saveToDB([{
                 link: link,
@@ -349,15 +359,15 @@ const toomicsCrawling = async () => {
 
             await downloadImg(thumbnail, title);
 
-            // console.log("data :", {
-            //     link: link,
-            //     title: title,
-            //     thumbnail: title + ".jpg",
-            //     author: author,
-            //     genre: genre,
-            //     platformID: platformID,
-            //     cycle: cycle
-            // })
+            console.log("data :", {
+                link: link,
+                title: title,
+                thumbnail: title + ".jpg",
+                author: author,
+                genre: genre,
+                platformID: platformID,
+                cycle: cycle
+            })
         }
     }
 
@@ -423,15 +433,15 @@ const toptoonCrawling = async () => {
                 cycle: cycle
             })
 
-            // webtoonDataList.push({
-            //     link: link,
-            //     title: title,
-            //     thumbnail: title + ".jpg",
-            //     author: author,
-            //     genre: genre,
-            //     platformID: platformID,
-            //     cycle: cycle
-            // })
+            webtoonDataList.push({
+                link: link,
+                title: title,
+                thumbnail: title + ".jpg",
+                author: author,
+                genre: genre,
+                platformID: platformID,
+                cycle: cycle
+            })
             
             await saveToDB([{
                 link: link,
@@ -456,6 +466,7 @@ const toptoonCrawling = async () => {
 const downloadImg = async (url, title) => {
     await mutex.acquire();
     console.log("\n" + url + "\n");
+    thumbnailURL.push(url);
 
     console.log("before fs");
     fs.readdir(FILEPATH, (err) => {
@@ -719,6 +730,7 @@ const bringWebtoonData = async () => {
     await lezhinCrawling();
     await toomicsCrawling();
     await toptoonCrawling();
+    console.log("thumbnailURL :", thumbnailURL);
 }
 
 const renewalData = async () => {
@@ -726,4 +738,6 @@ const renewalData = async () => {
     await bringWebtoonData();
 }
 
-module.exports = renewalData;
+// module.exports = renewalData;
+
+bringWebtoonData();
