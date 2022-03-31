@@ -113,7 +113,14 @@ const crawling = async (url) => {
 };
 
 const crawling2 = async (url) => {
-    const browser = await puppeteer.launch();
+    let browser;
+    try {
+        browser = await puppeteer.launch({args: ['--no-sandbox', '--disable-setuid-sandbox']});
+    }
+    catch(err) {
+        console.log("\nlaunch() err");
+        console.log(err);
+    }
 
     let page;
     try {
