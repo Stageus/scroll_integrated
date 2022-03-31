@@ -34,8 +34,8 @@ app.use("/webtoon", webtoon);
 const mylibrary = require("./router/myLibrary");
 app.use("/myLibrary", mylibrary);
 
-const schedule = require("./schedule/schedule");
-schedule();
+// const schedule = require("./schedule/schedule");
+// schedule();
 
 app.use("/thumbnail", express.static("thumbnail"));
 
