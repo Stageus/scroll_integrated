@@ -457,7 +457,6 @@ const toptoonCrawling = async () => {
                 cycle: cycle
             }]);
             console.log("after saveToDB");
-
         }
     }
 
@@ -494,11 +493,22 @@ const downloadImg = async (url, title) => {
     const extension = /image\/(.+)/.exec(img.headers['content-type'])[1];
     console.log("\nextension :", extension);
     
-    const filename = title.replace(/\//g, 'I') + '.' + extension;
+    const filename = title.replace(/\//g, 'I') + '.jpg';
 
     console.log("before writeFileSync");
     fs.writeFileSync(FILEPATH + filename, img.data);
     console.log("after axios");
+
+    // try {
+    //     fs.statSync(FILEPATH + filename)
+    //     console.log("파일이 이미 존재합니다.");
+    // }
+    // catch(err) {
+    //     console.log("before writeFileSync");
+    //     console.log("이미지 다운로드");
+    //     fs.writeFileSync(FILEPATH + filename, img.data);
+    //     console.log("after axios");
+    // }
 
     mutex.release()
     return filename;
