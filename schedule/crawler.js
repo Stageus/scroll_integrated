@@ -496,9 +496,12 @@ const downloadImg = async (url, title) => {
         console.log(err);
     }
     console.log("after axios");
+    const extension = /image\/(.+)/.exec(img.headers['content-type']);
+    console.log("\nextension :", extension[1]);
+
 
     console.log("before writeFileSync");
-    fs.writeFileSync(FILEPATH + title.replace(/\//g, 'I') + '.jpg', img.data);
+    fs.writeFileSync(FILEPATH + title.replace(/\//g, 'I') + '.' + extension, img.data);
     console.log("after axios");
 
     mutex.release()
