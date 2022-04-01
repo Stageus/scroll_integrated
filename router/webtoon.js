@@ -74,6 +74,8 @@ router.post("", (req, res) => {
     ON i.title = w.title AND i.platformid = w.platformid
     JOIN toon.toongenre AS t
     ON i.webtoonid = t.webtoonid
+    JOIN toon.genre AS g
+    ON t.genreid = g.genreid
     JOIN toon.cycle AS c
     ON i.webtoonid = c.webtoonid WHERE`
     if (Array.isArray(receive.platform) && Array.isArray(receive.genre) && Array.isArray(receive.weekday)) {
@@ -88,8 +90,7 @@ router.post("", (req, res) => {
         if (receive.genre.length > 0) {
             sql += " ("
             for (let i = 0; i < receive.genre.length; i++) {
-                receive.genre[i] = changeReq(receive.genre[i]);
-                sql += " t.genreid=" + receive.genre[i] + " OR";
+                sql += " g.genrename='" + receive.genre[i] + "' OR";
             }
             sql += " false) AND";
         }
@@ -404,6 +405,27 @@ router.post("/click", async(req, res) => {
         result.message = "클릭 기록 오류";
         console.log(err);
     }
+})
+
+router.get("/genre", (req, res) => {
+    const result = {
+        success: false,
+        genre: []
+    }
+
+    let sql = "SELECT genrename FROM toon.genre ORDER BY genrename;";
+    pg(sql, null)
+    .then(post => {
+        if (post.success) {
+            result.success = true;
+            for (let i = 0; i < post.data.length; i++) {
+                result.genre[i] = post.data[i].genrename;
+            }
+        }
+    })
+    .finally(() => {
+        res.send(result);
+    })
 })
 
 module.exports = router;
