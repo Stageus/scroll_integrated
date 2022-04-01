@@ -492,7 +492,7 @@ const downloadImg = async (url, title) => {
     }
     console.log("after axios");
     const extension = /image\/(.+)/.exec(img.headers['content-type'])[1];
-    console.log("\nextension :", extension[1]);
+    console.log("\nextension :", extension);
     
     const filename = title.replace(/\//g, 'I') + '.' + extension;
 
