@@ -494,7 +494,6 @@ const downloadImg = async (url, title) => {
     console.log("\nextension :", extension);
     
     const filename = title.replace(/\//g, 'I') + '.jpg';
-
     console.log("before writeFileSync");
     fs.writeFileSync(FILEPATH + filename, img.data);
     console.log("after axios");
@@ -755,6 +754,6 @@ const renewalData = async () => {
     await bringWebtoonData();
 }
 
-// module.exports = renewalData;
+module.exports = renewalData;
 
-bringWebtoonData();
+// bringWebtoonData();
