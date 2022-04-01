@@ -493,7 +493,7 @@ const downloadImg = async (url, title) => {
     const extension = /image\/(.+)/.exec(img.headers['content-type'])[1];
     console.log("\nextension :", extension);
     
-    const filename = title.replace(/\//g, 'I') + '.jpg';
+    const filename = title.replace(/\//g, 'I') + '.' + extension;
     console.log("before writeFileSync");
     fs.writeFileSync(FILEPATH + filename, img.data);
     console.log("after axios");
