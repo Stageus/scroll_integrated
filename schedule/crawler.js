@@ -755,6 +755,6 @@ const renewalData = async () => {
     await bringWebtoonData();
 }
 
-module.exports = renewalData;
+// module.exports = renewalData;
 
-// bringWebtoonData();
+bringWebtoonData();
