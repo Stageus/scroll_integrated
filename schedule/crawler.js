@@ -8,7 +8,7 @@ const es = require("es7");
 // iconv - charset이 utf-8이 아닌 경우 사용
 // const testSet = require("../testSet");
 
-const FILEPATH = "./thumbnail/";
+const FILEPATH = "../thumbnail/";
 
 // const pg = require("pgRequest");
 
@@ -491,7 +491,7 @@ const downloadImg = async (url, title) => {
         console.log(err);
     }
     console.log("after axios");
-    const extension = /image\/(.+)/.exec(img.headers['content-type']);
+    const extension = /image\/(.+)/.exec(img.headers['content-type'])[1];
     console.log("\nextension :", extension[1]);
     
     const filename = title.replace(/\//g, 'I') + '.' + extension;
