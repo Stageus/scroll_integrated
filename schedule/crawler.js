@@ -185,7 +185,7 @@ const naverCrawling = async () => {
 
             const thumbnailFilename = await downloadImg(thumbnail, title);
 
-            console.log("data :", {
+            const webtoonData = {
                 link: link,
                 title: title,
                 thumbnail: thumbnailFilename,
@@ -193,19 +193,11 @@ const naverCrawling = async () => {
                 genre: genre,
                 platformID: platformID,
                 cycle: cycle
-            })
+            }
 
-            webtoonDataList.push({
-                link: link,
-                title: title,
-                thumbnail: thumbnailFilename,
-                author: author,
-                genre: genre,
-                platformID: platformID,
-                cycle: cycle
-            })
-            
-            
+            console.log("data :", webtoonData);
+
+            webtoonDataList.push(webtoonData);
         }
     }
 
