@@ -375,8 +375,7 @@ const toomicsCrawling = async () => {
         }
     }
 
-    console.log("\nwebtoonHtml :", webtoonHtml);
-    console.log("\nweekdayListHtml :", weekdayListHtml);
+    console.log("\nwebtoonHtml :", errWebtoon);
 
     // await saveToDB(webtoonDataList);
     // await moveDataToElastic(dataWithID);
@@ -460,9 +459,8 @@ const toptoonCrawling = async () => {
             }
         }
     }
-    
-    console.log("\nwebtoonHtml :", webtoonHtml);
-    console.log("\nweekdayListHtml :", weekdayListHtml);
+
+    console.log("\nwebtoonHtml :", errWebtoon);
 
     // await saveToDB(webtoonDataList);
     // await moveDataToElastic(dataWithID);
