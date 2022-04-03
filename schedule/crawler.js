@@ -316,6 +316,7 @@ const lezhinCrawling = async () => {
 const toomicsCrawling = async () => {
     const week = [1, 2, 3, 4, 5, 6, 7];
     const platformID = PLATFORMID.TOOMICS;
+    const errWebtoon = [];
 
     for (let index = 0; index < week.length; index++) {
         let cycle = null;
@@ -384,6 +385,7 @@ const toomicsCrawling = async () => {
 const toptoonCrawling = async () => {
     const week = [1, 2, 3, 4, 5, 6, 7, 8];
     const platformID = PLATFORMID.TOPTOON;
+    const errWebtoon = [];
     
     for (let index = 0; index < week.length; index++) {
         console.log("week list url :", TOPTOON + TOPTOON_WEEKDAYLIST + week[index]);
