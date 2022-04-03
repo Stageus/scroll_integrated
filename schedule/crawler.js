@@ -219,7 +219,7 @@ const naverCrawling = async () => {
         }
     }
 
-    // await saveToDB(webtoonDataList);
+    await saveToDB(webtoonDataList);
     // await moveDataToElastic(dataWithID);
 }
 
@@ -290,30 +290,32 @@ const lezhinCrawling = async () => {
                     platformID: platformID,
                     cycle: cycle
                 };
-    
+
                 // titleAndThumbnail.push({title: title, thumbnail: thumbnailFilename});
-    
+
                 if (!checkContents(title)) {
                     console.log("err title :", title);
-                    errWebtoon.push("\nwebtoonHtml :", webtoonHtml);
-                    errWebtoon.push("\nweekdayListHtml :", weekdayListHtml);
+                    console.log("\nwebtoonHtml :", webtoonHtml);
+                    console.log("\nweekdayListHtml :", weekdayListHtml);
+                    errWebtoon.push(webtoonHtml);
+                    errWebtoon.push(weekdayListHtml);
                 }
-    
+
                 // console.log("webtoon html :", webtoonHtml);
                 // console.log("thumbnail link:", thumbnail);
                 // console.log("data :", webtoonData)
     
-                // webtoonDataList.push({
-                //     link: link,
-                //     title: title,
-                //     thumbnail: thumbnailFilename,
-                //     author: author,
-                //     genre: genre,
-                //     platformID: platformID,
-                //     cycle: cycle
-                // })
+                webtoonDataList.push({
+                    link: link,
+                    title: title,
+                    thumbnail: thumbnailFilename,
+                    author: author,
+                    genre: genre,
+                    platformID: platformID,
+                    cycle: cycle
+                })
                 
-                // await saveToDB([webtoonData]);
+                await saveToDB([webtoonData]);
 
                 if (checkContents(title)) {
                     break;
@@ -386,19 +388,19 @@ const toomicsCrawling = async () => {
                     cycle: cycle
                 }
     
-                // console.log("data :", webtoonData)
+                console.log("data :", webtoonData)
     
-                // webtoonDataList.push({
-                //     link: link,
-                //     title: title,
-                //     thumbnail: thumbnailFilename,
-                //     author: author,
-                //     genre: genre,
-                //     platformID: platformID,
-                //     cycle: cycle
-                // })
+                webtoonDataList.push({
+                    link: link,
+                    title: title,
+                    thumbnail: thumbnailFilename,
+                    author: author,
+                    genre: genre,
+                    platformID: platformID,
+                    cycle: cycle
+                })
                 
-                // await saveToDB([webtoonData]);
+                await saveToDB([webtoonData]);
 
                 if (checkContents(title)) {
                     break;
@@ -476,18 +478,18 @@ const toptoonCrawling = async () => {
                 console.log("thumbnail :", thumbnail);
                 console.log("data :", webtoonData)
     
-                // webtoonDataList.push({
-                //     link: link,
-                //     title: title,
-                //     thumbnail: thumbnailFilename,
-                //     author: author,
-                //     genre: genre,
-                //     platformID: platformID,
-                //     cycle: cycle
-                // })
+                webtoonDataList.push({
+                    link: link,
+                    title: title,
+                    thumbnail: thumbnailFilename,
+                    author: author,
+                    genre: genre,
+                    platformID: platformID,
+                    cycle: cycle
+                })
                 
-                // await saveToDB([webtoonData]);
-                // console.log("after saveToDB");
+                await saveToDB([webtoonData]);
+                console.log("after saveToDB");
 
                 if (checkContents(title)) {
                     break;
@@ -548,7 +550,7 @@ const downloadImg = async (url, title) => {
     const filename = title.replace(/\//g, 'I') + '.' + extension;
     console.log("before writeFileSync");
     fs.writeFileSync(FILEPATH + filename, img.data);
-    console.log("after axios");
+    console.log("after writeFileSync");
 
     // try {
     //     fs.statSync(FILEPATH + filename)
@@ -809,5 +811,4 @@ const renewalData = async () => {
 
 // module.exports = renewalData;
 
-// bringWebtoonData();
-lezhinCrawling();
+renewalData();
