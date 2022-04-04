@@ -3,9 +3,9 @@ const express = require("express");
 const router = express.Router();
 // const path = require("path");
 
-const pg = require("../pgRequest");
+const pg = require("../module/pgRequest");
 const requestIp = require("request-ip");
-const mongoLog = require("../logging.js");
+const mongoLog = require("../module/logging");
 const jwt = require("jsonwebtoken");
 
 const jwtKey = require("../private/privateKey").jwtPrivateKey;
@@ -15,7 +15,10 @@ const pwForm = new RegExp("^[A-Za-z0-9]{4,20}$");
 const nickForm = new RegExp("^[가-힣a-zA-Z0-9]{2,10}$");
 
 // 내 정보 가져오기
-router.get("", (req, res) => {
+router.post("/info", (req, res) => {//post account/info로 바꾸기
+    const receive = {
+        token: req.body.token
+    }
     const result = {
         success: false,
         data: null,
@@ -26,7 +29,7 @@ router.get("", (req, res) => {
 
     // jwt인증
     try {
-        result.data = jwt.verify(req.cookies.token, jwtKey);
+        result.data = jwt.verify(receive.token, jwtKey);
         result.success = true;
         result.message = "회원정보 불러오기 성공";
         result.email = result.data.email;
@@ -109,17 +112,23 @@ router.post("", (req, res) => {
             else {
                 console.log("\npostgresql error check info failed1\n");
                 result.message = "오류가 발생했습니다" // 중복 회원 존재
+                mongoLog("account/post", requestIp.getClientIp(req), receive, result);
+
                 res.send(result);
             }
         }).catch(err => {
             console.log("\npostgresql error check info failed2\n");
             console.log(err);
             result.message = "오류가 발생했습니다" // 중복 확인 실패
+            mongoLog("account/post", requestIp.getClientIp(req), receive, result);
+
             res.send(result);
         })
     }
     else {
         result.message = "올바른 형식으로 작성해주십시오." // 데이터 양식에 맞지 않음
+        mongoLog("account/post", requestIp.getClientIp(req), receive, result);
+
         res.send(result);
     }
 });
@@ -153,7 +162,7 @@ router.post("/login", (req, res) => {
                     },
                     jwtKey
                 );
-                // res.cookie("token", jwtToken);
+                res.cookie("token", jwtToken);
                 result.token = jwtToken;
                 result.success = true;
                 result.message = "로그인 성공";
@@ -173,7 +182,7 @@ router.post("/login", (req, res) => {
         result.message = "로그인 오류"; // DB 에러
     }).finally(() => {
         // mongoDB에 로그 저장
-        mongoLog("account/post", requestIp.getClientIp(req), receive, result);
+        mongoLog("account/login/post", requestIp.getClientIp(req), receive, result);
 
         // 결과 보내기
         res.send(result);
@@ -183,6 +192,7 @@ router.post("/login", (req, res) => {
 // 회원정보 수정
 router.put("", (req, res) => {
     const receive = {
+        token: req.body.token,
         nickname: req.body.nickname,
         newPw: req.body.newPw,
         currentPw: req.body.currentPw
@@ -196,7 +206,7 @@ router.put("", (req, res) => {
     const validToken = false;
     const jwtData = null;
     try {
-        jwtData = jwt.verify(req.cookies.token);
+        jwtData = jwt.verify(receive.token);
         const pw = jwtData.pw;
         if (pw != currentPw) {
             result.problem = 2; // 현재 비밀번호 틀림
@@ -250,7 +260,7 @@ router.put("", (req, res) => {
                 result.problem = 5; // DB 입력 실패
             }).finally(() => {
                 // mongoDB에 로그 저장
-                mongoLog("account/post", requestIp.getClientIp(req), receive, result);
+                mongoLog("account/put", requestIp.getClientIp(req), receive, result);
 
                 // 결과 보내기
                 res.send(result);
@@ -259,17 +269,24 @@ router.put("", (req, res) => {
         }
         else {
             result.problem = 3; // 수정할 데이터 양식에 맞지 않음
+            mongoLog("account/put", requestIp.getClientIp(req), receive, result);
+
             res.send(result);
         }
     }
     else {
         result.problem = 1; // 인증 실패
+        mongoLog("account/put", requestIp.getClientIp(req), receive, result);
+
         res.send(result);
     }
 });
 
 // 회원 탈퇴
 router.delete("", (req, res) => {
+    const receive = {
+        token: req.body.token
+    }
     const result = {
         success: false,
         problem: 0
@@ -279,7 +296,7 @@ router.delete("", (req, res) => {
     const validToken = false;
     const jwtData = null;
     try {
-        jwtData = jwt.verify(res.cookies.token, jwtKey);
+        jwtData = jwt.verify(receive.token, jwtKey);
         validToken = true;
     }
     catch(err) {
@@ -307,7 +324,7 @@ router.delete("", (req, res) => {
             result.problem = 2; // DB 변경 실패
         }).finally(() => {
             // mongoDB에 로그 저장
-            mongoLog("account/post", requestIp.getClientIp(req), {}, result);
+            mongoLog("account/delete", requestIp.getClientIp(req), {}, result);
 
             // 결과 보내기
             res.send(result);
@@ -315,6 +332,8 @@ router.delete("", (req, res) => {
     }
     else {
         // mongoDB에 로그 저장
+        mongoLog("account/delete", requestIp.getClientIp(req), receive, result);
+
 
 
         // 결과 보내기
@@ -323,6 +342,7 @@ router.delete("", (req, res) => {
 
 });
 
+//중복확인
 router.post("/doubleCheck", (req, res) => {
     const receive = {
         type: req.body.type,
@@ -366,13 +386,15 @@ router.post("/doubleCheck", (req, res) => {
             result.message = "중복체크 오류"; // DB 에러
         }).finally(() => {
             // mongoDB에 로그 저장
-            mongoLog("account/post", requestIp.getClientIp(req), receive, result);
+            mongoLog("account/doubleCheck", requestIp.getClientIp(req), receive, result);
 
             // 결과 보내기
             res.send(result);
         });
     } else {
         result.message = "올바른 데이터 형식이 아닙니다.";
+        mongoLog("account/doubleCheck", requestIp.getClientIp(req), receive, result);
+
         res.send(result);
     }
 });

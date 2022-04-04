@@ -3,9 +3,9 @@ const express = require("express");
 const router = express.Router();
 // const path = require("path");
 
-const pg = require("../pgRequest");
+const pg = require("../module/pgRequest");
 const requestIp = require("request-ip");
-const mongoLog = require("../logging");
+const mongoLog = require("../module/logging");
 const es = require("es7");
 
 const jwt = require("jsonwebtoken");
@@ -15,6 +15,9 @@ const LIBRARY = "library";
 
 // 즐겨찾기 정보 불러오기
 router.get("", (req, res) => {
+    const receive = {
+        token: req.body.string
+    }
 
     const result = {
         success: false,
@@ -38,7 +41,7 @@ router.get("", (req, res) => {
     let auth = false;
     let jwtData = null;
     try {
-        jwtData = jwt.verify(res.cookies.token, jwtKey);
+        jwtData = jwt.verify(receive.token, jwtKey);
         auth = true;
     } catch(err) {
         console.log("토큰 만료");
@@ -46,12 +49,14 @@ router.get("", (req, res) => {
     }
 
     if (auth) {
+        const memberID = jwtData.memberID;
+
         const esClient = new es.Client({
             node: "https://localhost:9200/" // 수정해야함.
         });
 
         esClient.search({
-            index: jwtData.memberID + INDEX,
+            index: LIBRARY,
             body: {
                 query: {}
             }
@@ -78,19 +83,22 @@ router.get("", (req, res) => {
 // 즐겨찾기 등록
 router.post("", async (req, res) => {
     const receive = {
+        token: req.body.token,
         webtoonID: req.body.webtoonID
     }
     const result = {
         success: false,
-        message: "즐겨찾기 등록 성공"
+        message: "즐겨찾기 등록 실패"
     }
 
     let auth = false;
     let jwtData = null;
     try {
-        jwtData = jwt.verify(req.cookies.token, jwtKey);
+        // console.log(jwt.verify(req.cookies.token, jwtKey));
+        jwtData = jwt.verify(receive.token, jwtKey);
         auth = true;
     } catch(err) {
+        console.log(err);
         console.log("토큰 만료");
         result.message = "회원정보 인증 실패"; // 인증 실패
     }
@@ -106,6 +114,8 @@ router.post("", async (req, res) => {
 
         try {
             await pg(sql, values);
+            result.success = true;
+            result.message = "즐겨찾기 등록 성공";
         } catch(err) {
             console.log("err :", err);
             result.message = "즐겨찾기 등록 오류"; // DB 저장 실패
@@ -113,7 +123,7 @@ router.post("", async (req, res) => {
 
     //     try {
     //         await esClient.index({
-    //             index: jwtData.memberid + INDEX,
+    //             index: LIBRARY,
     //             body: {
     //                 webtoonID: receive.webtoonID
     //             }
@@ -122,13 +132,13 @@ router.post("", async (req, res) => {
     //         console.log("err :", err);
     //         result.message = "즐겨찾기 등록 오류"; // elasticsearch 저장 실패
     //     }
-        result.success = true;
+        mongoLog("myLibrary/post", requestIp.getClientIp(req), receive, result);
         res.send(result);
     }
     else {
         console.log("인증 실패");
         result.message = "회원정보 인증 실패"; // 인증 실패
-        mongoLog("account/post", requestIp.getClientIp(req), receive, result);
+        mongoLog("myLibrary/post", requestIp.getClientIp(req), receive, result);
         res.send(result);
     }
 })
@@ -136,19 +146,22 @@ router.post("", async (req, res) => {
 // 즐겨찾기 삭제
 router.delete("", async(req, res) => {
     const receive = {
+        token: req.body.token,
         webtoonID: req.body.webtoonID
     }
     const result = {
-        message: "즐겨찾기 삭제 성공",
+        message: "즐겨찾기 삭제 실패",
         success: false
     }
 
     let auth = false;
     let jwtData = null;
     try {
-        jwtData = jwt.verify(req.cookies.token, jwtKey);
+        // console.log(jwt.verify(req.cookies.token, jwtKey));
+        jwtData = jwt.verify(req.body.token, jwtKey);
         auth = true;
     } catch(err) {
+        console.log(err);
         console.log("인증 실패");
         result.message = "회원정보 인증 실패"; // 인증 실패
     }
@@ -159,6 +172,8 @@ router.delete("", async(req, res) => {
 
         try {
             await pg(sql, values);
+            result.success = true;
+            result.message = "즐겨찾기 삭제 성공";
         } catch(err) {
             console.log("err :", err);
             result.message = "즐겨찾기 삭제 오류"; // DB 저장 실패
@@ -169,7 +184,7 @@ router.delete("", async(req, res) => {
         // });
 
         // esClient.deleteByQuery({
-        //     index: INDEX,
+        //     index: LIBRARY,
         //     body:{
 
         //     }
@@ -185,12 +200,13 @@ router.delete("", async(req, res) => {
         //     res.send(result);
         // });
 
-        result.success = true;
+        mongoLog("myLibrary/delete", requestIp.getClientIp(req), receive, result);
         res.send(result);
     }
     else {
         console.log("인증 실패");
         result.message = "회원정보 인증 실패";
+        mongoLog("myLibrary/delete", requestIp.getClientIp(req), receive, result);
         res.send(result);
     }
 })

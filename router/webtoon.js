@@ -3,9 +3,9 @@ const express = require("express");
 const router = express.Router();
 // const path = require("path");
 
-const pg = require("../pgRequest");
+const pg = require("../module/pgRequest");
 const requestIp = require("request-ip");
-const mongoLog = require("../logging");
+const mongoLog = require("../module/logging");
 const es = require("es7");
 const jwt = require("jsonwebtoken");
 
@@ -13,45 +13,226 @@ const jwtKey = require("../private/privateKey").jwtPrivateKey;
 const WEBTOON = "webtoon";
 const LIBRARY = "library";
 
-const redis = require("../redis.js");
+const redis = require("../module/redis");
+
+const changeReq = (req) => {
+    if (req === "일") {
+        return 0;
+    } else if (req === "월" || req === "네이버" || req === "액션") {
+        return 1;
+    } else if (req === "화" || req === "레진" || req === "코미디") {
+        return 2;
+    } else if (req === "수" || req === "탑툰" || req === "로맨스") {
+        return 3;
+    } else if (req === "목" || req === "투믹스" || req === "판타지") {
+        return 4;
+    } else if (req === "금" || req === "카카오" || req === "일상") {
+        return 5;
+    } else if (req === "토" || req === "k툰" || req === "호러") {
+        return 6;
+    } else if (req === "열흘") {
+        return 7;
+    } else if (req === "기타") {
+        return 8;
+    } else {
+        return -1;
+    }
+}
 
 // 요일, 플랫폼, 장르, 즐겨찾기 여부
 
 // 웹툰 정보 불러오기
-router.get("", async (req, res) => {
+router.post("", (req, res) => {
     const receive = {
-        weekday: req.query.weekday,
-        genre: req.query.genre,
-        platform: req.query.platform
+        token: req.body.token,
+        weekday: req.body.weekday,
+        genre: req.body.genre,
+        platform: req.body.platform
     };
     const result = {
         success: false,
-        message: "웹툰 불러오기 성공",
+        message: "웹툰 불러오기 실패",
         webtoon: [
-            {
-                id: 1,
-                title: "쇼미더럭키짱!",
-                detail: "고작 18살 나이로 부산을 꿇린 남자 강건마\n메마른 그의 가슴을 송두리째 불태울 존재가 나타났으니\,\n그것은 \'힙합\'(Hip - hop)!\n래퍼가 되기 위해선 서울을 통합해야 하는 법!\n사나이 강건마! 오늘도 래퍼가 되기 위해 사람을 팬다!\n참고로 두 작가 모두 랩이 뭔지 모른다!",
-                genre: ["액션"],
-                weekday: [1],
-                platform: "naver",
-                thumbnail: "https://shared-comic.pstatic.net/thumb/webtoon/783054/thumbnail/thumbnail_IMAG10_6917f3d9-c5bb-4bfd-aa04-a288f7b252af.jpg",
-                link: "https://comic.naver.com/webtoon/list?titleId=783054&weekday=mon",
-                author: ["박태준"]
-            }
+            // {
+            //     webtoonid: 1,
+            //     title: "쇼미더럭키짱!",
+            //     thumbnail: "https://shared-comic.pstatic.net/thumb/webtoon/783054/thumbnail/thumbnail_IMAG10_6917f3d9-c5bb-4bfd-aa04-a288f7b252af.jpg",
+            //     link: "https://comic.naver.com/webtoon/list?titleId=783054&weekday=mon",
+            //     author: "박태준/김성모",
+            //      bookmark: false
+            // }
         ]
     };
+    let webtoonArr = [];
+    let bookmarkArr = [];
 
-    let auth = false;
-    let jwtData = null;
-    try {
-        jwtData = jwt.verify(res.cookies.token, jwtKey);
-        auth = true;
-    } catch(err) {
-        result.message = "회원정보 없음"; // 토큰 인증 실패
+    // console.log(receive);
+
+    let sql = `SELECT i.webtoonid, w.title, w.thumbnail, w.link, w.author
+    FROM toon.webtoon AS w
+    JOIN toon.webtoonid AS i
+    ON i.title = w.title AND i.platformid = w.platformid
+    JOIN toon.toongenre AS t
+    ON i.webtoonid = t.webtoonid
+    JOIN toon.genre AS g
+    ON t.genreid = g.genreid
+    JOIN toon.cycle AS c
+    ON i.webtoonid = c.webtoonid WHERE`
+    if (Array.isArray(receive.platform) && Array.isArray(receive.genre) && Array.isArray(receive.weekday)) {
+        if (receive.platform.length > 0) {
+            sql += " (";
+            for (let i = 0; i < receive.platform.length; i++) {
+                receive.platform[i] = changeReq(receive.platform[i]);
+                sql += " w.platformid=" + receive.platform[i] + " OR";
+            }
+            sql += " false) AND";
+        }
+        if (receive.genre.length > 0) {
+            sql += " ("
+            for (let i = 0; i < receive.genre.length; i++) {
+                sql += " g.genrename='" + receive.genre[i] + "' OR";
+            }
+            sql += " false) AND";
+        }
+        if (receive.weekday.length > 0) {
+            sql += " ("
+            for (let i = 0; i < receive.weekday.length; i++) {
+                receive.weekday[i] = changeReq(receive.weekday[i]);
+                sql += " c.cycle=" + receive.weekday[i] + " OR";
+            }
+            sql += " false)";
+        } else {
+            sql += " true";
+        }
+        if (receive.platform.length === 0 && receive.genre.length === 0 && receive.weekday.length === 0) {
+            // console.log("@@@@")
+            sql = `SELECT i.webtoonid, w.title, w.thumbnail, w.link, w.author
+            FROM toon.webtoon AS w
+            JOIN toon.webtoonid AS i
+            ON i.title = w.title AND i.platformid = w.platformid`
+        }
+        sql += " ORDER BY viewcount DESC;";
+        // console.log(sql);
+        // 웹툰 필터링
+        pg(sql, [])
+        .then(post => {
+            if (post.success) {
+                // console.log(post.data);
+                //배열 중복제거
+                for (let i = 0; i < post.data.length; i++) {
+                    webtoonArr[i] = post.data[i].webtoonid;
+                }
+                webtoonArr = webtoonArr.filter((element, index) => webtoonArr.indexOf(element) === index);
+                console.log(webtoonArr);
+                // 웹툰 불러오기
+                // if (webtoonArr.length > 0) {
+                //     let sql = `SELECT webtoonid, title, thumbnail, link, author
+                //     FROM toon.webtoon WHERE`;
+                //     for (let i = 0; i < webtoonArr.length; i++) {
+                //         sql += " webtoonid=$" + (i + 1) + " OR"
+                //     }
+                //     sql += " false ORDER BY viewcount DESC;";
+                //     let values = webtoonArr;
+                //     // console.log(sql);
+                //     pg(sql, values)
+                //     .then(post => {
+                //         if (post.success) {
+                //             // console.log(post.data);
+                // console.log(post.data);
+                for (let i = 0; i < webtoonArr.length; i++) {
+                    for (let j = 0; j < post.data.length; j++) {
+                        if (webtoonArr[i] === post.data[j].webtoonid) {
+                            result.webtoon[i] = post.data[j]
+                        }
+                    }
+                }
+                for (let i = 0; i < result.webtoon.length; i++) {
+                    result.webtoon[i].thumbnail = "http://3.36.42.188:3000/thumbnail/" + result.webtoon[i].thumbnail
+                }
+
+                // 토큰 인증
+                let jwtData = null;
+                let auth = false;
+                try {
+                    jwtData = jwt.verify(receive.token, jwtKey);
+                    auth = true;
+                } catch(err) {
+                    // 토큰 인증 실패
+                    for (let i = 0; i < result.webtoon.length; i++) {
+                        result.webtoon[i].bookmark = false;
+                    }
+                }
+                // 북마크 유무 통합 여부 점검
+                if (auth) {
+                    let sql = `SELECT webtoonid FROM toon.library WHERE memberid=$1`;
+                    let values = [jwtData.memberid];
+                    pg(sql, values)
+                    .then(post => {
+                        if (post.success) {
+                            bookmarkArr = post.data;
+                            for (let i = 0; i < bookmarkArr.length; i++) {
+                                bookmarkArr[i] = bookmarkArr[i].webtoonid;
+                            }
+                            for (let i = 0; i < result.webtoon.length; i++) {
+                                result.webtoon[i].bookmark = false;
+                                if (bookmarkArr.includes(result.webtoon[i].webtoonid)) {
+                                    result.webtoon[i].bookmark = true;
+                                }
+                            }
+                        } else {
+                            result.message = "웹툰 즐겨찾기 오류"; // DB 에러
+                            console.log("\npostgresql err get member info failed\n");
+                            console.log(err);
+                        }
+                    }).catch(err => {
+                        console.log("\npostgresql err get member info failed");
+                        console.log(err);
+                        result.message = "웹툰 즐겨찾기 오류"; // DB 에러
+                    }).finally(() => {
+                        result.success = true;
+                        result.message = "웹툰 불러오기 성공";
+                        mongoLog("webtoon/post", requestIp.getClientIp(req), receive, result);
+                        res.send(result);
+                    })
+                } else {
+                    result.success = true;
+                    result.message = "웹툰 불러오기 성공";
+                    mongoLog("webtoon/post", requestIp.getClientIp(req), receive, result);
+                    res.send(result);
+                }
+                //         } else {
+                //             result.message = "웹툰 불러오기 오류"; // DB 에러
+                //             console.log("\npostgresql err get member info failed\n");
+                //             console.log(err);
+                //             mongoLog("webtoon/post", requestIp.getClientIp(req), receive, result);
+                //             res.send(result);
+                //         }
+                //     }).catch(err => {
+                //         console.log("\npostgresql err get member info failed");
+                //         console.log(err);
+                //         result.message = "웹툰 불러오기 오류"; // DB 에러
+                //         mongoLog("webtoon/post", requestIp.getClientIp(req), receive, result);
+                //         res.send(result);
+                //     })
+                // } else {
+                //     result.message = "웹툰 불러오기 성공";
+                //     mongoLog("webtoon/post", requestIp.getClientIp(req), receive, result);
+                //     res.send(result);
+                // }
+            } else {
+                result.message = "웹툰 필터링 오류"; // DB 에러
+                console.log("\npostgresql err get member info failed\n");
+                console.log(err);
+                mongoLog("webtoon/post", requestIp.getClientIp(req), receive, result);
+                res.send(result);
+            }
+        }).catch(err => {
+            console.log("\npostgresql err get member info failed");
+            console.log(err);
+            result.message = "웹툰 필터링 오류"; // DB 에러
+            res.send(result);
+        })
     }
-
-    res.send(result); // 추후 삭제
 
     // if (auth) {
     //     const esClient = new es.Client({
@@ -138,7 +319,71 @@ router.get("/preview", (req, res) => {
     });
 })
 
-router.get("/click", (req, res) => {
+router.get("/history", async(req, res) => {
+    const result = {
+        success: false,
+        message: "기록 불러오기 실패",
+        webtoon: [
+            // {
+            //     webtoonid: 1,
+            //     title: "쇼미더럭키짱!",
+            //     link: "httplink"
+            // }
+        ]
+    }
+    //gethistory 이후 그 배열로 db참조, 반환
+    let webtoonArr =  await redis.getHistory(requestIp.getClientIp(req))
+    webtoonArr = webtoonArr.history
+    const resultArr = [];
+    // console.log(await webtoonArr);
+    // console.log(await webtoonArr.length);
+    if (await webtoonArr.length > 0) {
+        let sql = `SELECT i.webtoonid, w.title, w.link FROM toon.webtoon AS w
+        JOIN toon.webtoonid AS i
+        ON i.title = w.title AND i.platformid = w.platformid WHERE`
+        for (let i = 0; i < await webtoonArr.length; i++) {
+            sql += " i.webtoonid=$" + (i + 1) + " OR"
+        }
+        sql += " false;"
+        // console.log(sql);
+        // console.log(webtoonArr);
+        await pg(sql, webtoonArr)
+        .then(post => {
+            if (post.success) {
+                // console.log(post.data);
+                for (let resCount = 0; resCount < webtoonArr.length; resCount++) {
+                    for (let sqlCount = 0; sqlCount < post.data.length; sqlCount++) {
+                        if(webtoonArr[resCount] == post.data[sqlCount].webtoonid) {
+                            resultArr[resCount] = post.data[sqlCount]
+                        }
+                    }
+                }
+                // console.log(resultArr);
+                result.success = true;
+                result.message = "기록 불러오기 성공";
+                result.webtoon = resultArr;
+            } else {
+                result.message = "기록 불러오기 오류"; // DB 에러
+                console.log("\npostgresql err get member info failed\n");
+                console.log(err);
+            }
+        }).catch(err => {
+            console.log("\npostgresql err get member info failed");
+            console.log(err);
+            result.message = "기록 불러오기 오류"; // DB 에러
+        }).finally(() => {
+            mongoLog("webtoon/history/get", requestIp.getClientIp(req), {}, result);
+            res.send(result);
+        })
+    } else {
+        mongoLog("webtoon/history/get", requestIp.getClientIp(req), {}, result);
+        result.success = true;
+        result.message = "기록 불러오기 성공";
+        res.send(result);
+    }
+})
+
+router.post("/click", async(req, res) => {
     const receive = {
         webtoonid: req.body.webtoonID
     }
@@ -148,18 +393,39 @@ router.get("/click", (req, res) => {
     }
 
     try {
-        redis.addViewCount();
-        redis.addHistory();
+        await redis.addViewCount(receive.webtoonid);
+        await redis.addHistory(receive.webtoonid, requestIp.getClientIp(req));
         result.success = true;
         result.message = "클릭 기록 성공";
+        //로깅
+        mongoLog("webtoon/click/post", requestIp.getClientIp(req), receive, result);
+        
+        res.send(result);
     } catch(err) {
         result.message = "클릭 기록 오류";
         console.log(err);
     }
-    //로깅
-    mongoLog("account/click", requestIp.getClientIp(req), receive, result);
-    
-    res.send(result);
+})
+
+router.get("/genre", (req, res) => {
+    const result = {
+        success: false,
+        genre: []
+    }
+
+    let sql = "SELECT genrename FROM toon.genre ORDER BY genrename;";
+    pg(sql, null)
+    .then(post => {
+        if (post.success) {
+            result.success = true;
+            for (let i = 0; i < post.data.length; i++) {
+                result.genre[i] = post.data[i].genrename;
+            }
+        }
+    })
+    .finally(() => {
+        res.send(result);
+    })
 })
 
 module.exports = router;

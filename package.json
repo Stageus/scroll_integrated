@@ -18,7 +18,10 @@
     "jsonwebtoken": "^8.5.1",
     "mongodb": "^4.4.1",
     "mongoose": "^6.2.7",
+    "node-schedule": "^2.1.0",
     "pg": "^8.7.3",
+    "puppeteer": "^13.5.1",
+    "puppeteer-core": "^13.5.1",
     "redis": "^4.0.4",
     "request-ip": "^2.1.3"
   }
