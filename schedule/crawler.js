@@ -455,7 +455,6 @@ const toptoonCrawling = async () => {
                 console.log("\nwebtoonHtml :", webtoonHtml);
                 console.log("\nweekdayListHtml :", weekdayListHtml);
                 errWebtoon.push(webtoonHtml);
-                errWebtoon.push(weekdayListHtml);
             }
         }
     }
