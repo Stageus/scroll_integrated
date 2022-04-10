@@ -255,15 +255,15 @@ router.post("", (req, res) => {
     //             }
     //         });
 
-    //         for(let index = 0; index < searchResult.hits.hits.length; index++) {
-    //             query.webtoonID = searchResult.hits.hits[index].webtoonID;
+    //         for(let index = 0; index < searchResult.body.hits.hits.length; index++) {
+    //             query.webtoonID = searchResult.body.hits.hits[index].webtoonID;
     //             const searchResult2 = await esClient.search({
     //                 index: WEBTOON,
     //                 body: {
     //                     query: query
     //                 }
     //             })
-    //             result.webtoon.push(searchResult2.hits.hits[0]);
+    //             result.webtoon.push(searchResult2.body.hits.hits[0]);
     //         }
     //     } else {
     //         const searchResult3 = await esClient.search({
@@ -272,7 +272,7 @@ router.post("", (req, res) => {
     //                 query: query
     //             }
     //         })
-    //         result.webtoon = searchResult3.hits.hits;
+    //         result.webtoon = searchResult3.body.hits.hits;
     //     }
     //     mongoLog("account/post", requestIp.getClientIp(req), receive, result);
     //     res.send(result);

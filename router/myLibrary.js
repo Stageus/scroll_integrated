@@ -66,7 +66,7 @@ router.get("", (req, res) => {
                 result.problem = 2; // elasticsearch 데이터 불러오기 실패
             }
             else {
-                result.webtoon = searchResult.hits.hits;
+                result.webtoon = searchResult.body.hits.hits;
             }
 
             mongoLog("account/post", requestIp.getClientIp(req), {}, result);
