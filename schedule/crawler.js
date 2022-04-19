@@ -705,16 +705,17 @@ const dbCleaner = async () => {
 const moveDataToElastic = async (webtoonDataList) => {
     try {
         const esClient = new es.Client({
-            node: "https://localhost:9200/"
+            node: "http://localhost:9200/"
         })
 
-        esClient.delete({
-            index: "webtoon"
-        }, err => {
-            if (err) {
-                console.log(err);
+        await esClient.deleteByQuery({
+            index: "webtoon",
+            body: {
+                query: {
+                    match_all: {}
+                }
             }
-        });
+        })
 
         for (let idx = 0; idx < webtoonDataList.length; idx++) {
             const title = webtoonDataList[idx].title;

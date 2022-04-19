@@ -52,7 +52,7 @@ router.get("", (req, res) => {
         const memberID = jwtData.memberID;
 
         const esClient = new es.Client({
-            node: "https://localhost:9200/" // 수정해야함.
+            node: "http://elasticsearch:9200/" // 수정해야함.
         });
 
         esClient.search({
@@ -105,7 +105,7 @@ router.post("", async (req, res) => {
 
     if (auth) {
     //     const esClient = new es.Client({
-    //         node: "https://localhost:9200/" // 수정해야함.
+    //         node: "http://elasticsearch:9200/" // 수정해야함.
     //     });
 
         const sql = "INSERT INTO toon.library (webtoonID, memberID) VALUES ($1, $2)";
@@ -180,13 +180,15 @@ router.delete("", async(req, res) => {
         }
 
         // const esClient = new es.Client({
-        //     node: "https://localhost:9200/" // 수정해야함.
+        //     node: "http://elasticsearch:9200/" // 수정해야함.
         // });
 
         // esClient.deleteByQuery({
         //     index: LIBRARY,
         //     body:{
-
+        //         query: {
+        // 
+        //         }
         //     }
         // }, err => {
         //     if (err) {
