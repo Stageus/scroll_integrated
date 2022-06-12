@@ -143,7 +143,7 @@ router.post("/login", (req, res) => {
         success: false,
         message: "로그인 실패",
         token: null
-    }; 
+    };
 
     // postgresql에 같은 회원 정보 요청
     let sql = "SELECT * FROM toon.member WHERE email=$1 and password=$2;";
